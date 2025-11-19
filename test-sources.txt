@@ -1,0 +1,15 @@
+test/com/hospital/utils/TestDataFactory.java
+test/com/hospital/database/UserDAOTest.java
+test/com/hospital/database/AppointmentDAOTest.java
+test/com/hospital/database/PatientDAOTest.java
+test/com/hospital/model/DoctorTest.java
+test/com/hospital/model/UserTest.java
+test/com/hospital/model/PrescriptionTest.java
+test/com/hospital/model/PatientTest.java
+test/com/hospital/model/MessageTest.java
+test/com/hospital/model/DiagnosisTest.java
+test/com/hospital/model/AppointmentTest.java
+test/com/hospital/client/SocketClientTest.java
+test/com/hospital/TestRunner.java
+test/com/hospital/server/HospitalServerTest.java
+test/com/hospital/AllTests.java
