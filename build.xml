@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Hospital-Management-System" default="default" basedir=".">
+    <description>Builds, tests, and runs the Hospital Management System project.</description>
+    <import file="nbproject/build-impl.xml"/>
+
+    <target name="compile" description="Compile the project">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes" includeantruntime="false">
+            <classpath>
+                <pathelement location="lib/mysql-connector-java-8.0.28.jar"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile" description="Create JAR file">
+        <mkdir dir="dist"/>
+        <jar destfile="dist/Hospital-Management-System.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Main-Class" value="com.hospital.gui.LoginFrame"/>
+                <attribute name="Class-Path" value="lib/mysql-connector-java-8.0.28.jar"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar" description="Run the application">
+        <java jar="dist/Hospital-Management-System.jar" fork="true">
+            <classpath>
+                <pathelement location="lib/mysql-connector-java-8.0.28.jar"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="clean" description="Clean build files">
+        <delete dir="build"/>
+        <delete dir="dist"/>
+    </target>
+</project>

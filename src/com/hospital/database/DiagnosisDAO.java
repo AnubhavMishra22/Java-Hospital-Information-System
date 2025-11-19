@@ -1,0 +1,141 @@
+package com.hospital.database;
+
+import com.hospital.model.Diagnosis;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Data Access Object for Diagnosis operations
+ */
+public class DiagnosisDAO {
+
+    /**
+     * Add new diagnosis
+     */
+    public static int addDiagnosis(Diagnosis diagnosis) {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        int diagnosisId = -1;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            String query = "INSERT INTO diagnoses (appointment_id, patient_id, doctor_id, " +
+                          "symptoms, diagnosis, notes, follow_up_date) " +
+                          "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            pst = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            pst.setInt(1, diagnosis.getAppointmentId());
+            pst.setInt(2, diagnosis.getPatientId());
+            pst.setInt(3, diagnosis.getDoctorId());
+            pst.setString(4, diagnosis.getSymptoms());
+            pst.setString(5, diagnosis.getDiagnosis());
+            pst.setString(6, diagnosis.getNotes());
+            pst.setDate(7, diagnosis.getFollowUpDate());
+
+            int result = pst.executeUpdate();
+            if (result > 0) {
+                rs = pst.getGeneratedKeys();
+                if (rs.next()) {
+                    diagnosisId = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return diagnosisId;
+    }
+
+    /**
+     * Get diagnoses by patient
+     */
+    public static List<Diagnosis> getDiagnosesByPatient(int patientId) {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        List<Diagnosis> diagnoses = new ArrayList<>();
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            String query = "SELECT d.*, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
+                          "u.full_name as doctor_name " +
+                          "FROM diagnoses d " +
+                          "INNER JOIN patients p ON d.patient_id = p.patient_id " +
+                          "INNER JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                          "INNER JOIN users u ON doc.user_id = u.user_id " +
+                          "WHERE d.patient_id = ? " +
+                          "ORDER BY d.diagnosis_date DESC";
+            pst = conn.prepareStatement(query);
+            pst.setInt(1, patientId);
+
+            rs = pst.executeQuery();
+            while (rs.next()) {
+                diagnoses.add(extractDiagnosisFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return diagnoses;
+    }
+
+    /**
+     * Get diagnosis by ID
+     */
+    public static Diagnosis getDiagnosisById(int diagnosisId) {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        Diagnosis diagnosis = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            String query = "SELECT d.*, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
+                          "u.full_name as doctor_name " +
+                          "FROM diagnoses d " +
+                          "INNER JOIN patients p ON d.patient_id = p.patient_id " +
+                          "INNER JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                          "INNER JOIN users u ON doc.user_id = u.user_id " +
+                          "WHERE d.diagnosis_id = ?";
+            pst = conn.prepareStatement(query);
+            pst.setInt(1, diagnosisId);
+
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                diagnosis = extractDiagnosisFromResultSet(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return diagnosis;
+    }
+
+    /**
+     * Extract Diagnosis object from ResultSet
+     */
+    private static Diagnosis extractDiagnosisFromResultSet(ResultSet rs) throws SQLException {
+        Diagnosis diagnosis = new Diagnosis();
+        diagnosis.setDiagnosisId(rs.getInt("diagnosis_id"));
+        diagnosis.setAppointmentId(rs.getInt("appointment_id"));
+        diagnosis.setPatientId(rs.getInt("patient_id"));
+        diagnosis.setDoctorId(rs.getInt("doctor_id"));
+        diagnosis.setDiagnosisDate(rs.getTimestamp("diagnosis_date"));
+        diagnosis.setSymptoms(rs.getString("symptoms"));
+        diagnosis.setDiagnosis(rs.getString("diagnosis"));
+        diagnosis.setNotes(rs.getString("notes"));
+        diagnosis.setFollowUpDate(rs.getDate("follow_up_date"));
+        diagnosis.setPatientName(rs.getString("patient_name"));
+        diagnosis.setDoctorName(rs.getString("doctor_name"));
+        return diagnosis;
+    }
+}
