@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SonarQube Quality Profile for Hospital Management System -->
+<profile>
+  <name>Hospital Management System - Java Quality Profile</name>
+  <language>java</language>
+  <rules>
+    <!-- Code Smells -->
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S1192</key> <!-- String literals should not be duplicated -->
+      <priority>MAJOR</priority>
+    </rule>
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S1066</key> <!-- Collapsible if statements -->
+      <priority>MAJOR</priority>
+    </rule>
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S1481</key> <!-- Unused local variables -->
+      <priority>MAJOR</priority>
+    </rule>
+
+    <!-- Bugs -->
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S2095</key> <!-- Resources should be closed -->
+      <priority>BLOCKER</priority>
+    </rule>
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S2259</key> <!-- Null pointers -->
+      <priority>BLOCKER</priority>
+    </rule>
+
+    <!-- Security -->
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S2068</key> <!-- Credentials should not be hard-coded -->
+      <priority>CRITICAL</priority>
+    </rule>
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S3649</key> <!-- SQL injection -->
+      <priority>CRITICAL</priority>
+    </rule>
+
+    <!-- Performance -->
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S1860</key> <!-- Synchronization on object -->
+      <priority>MAJOR</priority>
+    </rule>
+  </rules>
+</profile>
