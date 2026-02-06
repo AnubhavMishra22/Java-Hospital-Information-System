@@ -49,8 +49,10 @@ public class MessagingPanel extends JPanel {
         refreshButton.addActionListener(e -> refreshMessages());
 
         JButton composeButton = new JButton("Compose Message");
-        composeButton.setBackground(new Color(34, 139, 34));
-        composeButton.setForeground(Color.WHITE);
+        composeButton.setBackground(Color.GREEN);
+        composeButton.setForeground(Color.BLACK);
+        composeButton.setOpaque(true);
+        composeButton.setBorderPainted(true);
         composeButton.addActionListener(e -> showComposeDialog());
 
         controlPanel.add(refreshButton);

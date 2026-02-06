@@ -112,9 +112,11 @@ public class MainDashboard extends JFrame {
         JButton logoutButton = new JButton("Logout");
         logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         logoutButton.setMaximumSize(new Dimension(200, 40));
-        logoutButton.setBackground(new Color(220, 20, 60));
-        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setBackground(Color.RED);
+        logoutButton.setForeground(Color.BLACK);
         logoutButton.setFocusPainted(false);
+        logoutButton.setOpaque(true);
+        logoutButton.setBorderPainted(true);
         logoutButton.setFont(new Font("Arial", Font.BOLD, 14));
         logoutButton.addActionListener(e -> logout());
 
@@ -128,9 +130,11 @@ public class MainDashboard extends JFrame {
         JButton button = new JButton(text);
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
         button.setMaximumSize(new Dimension(220, 45));
-        button.setBackground(new Color(70, 130, 180));
-        button.setForeground(Color.WHITE);
+        button.setBackground(Color.GREEN);
+        button.setForeground(Color.BLACK);
         button.setFocusPainted(false);
+        button.setOpaque(true);
+        button.setBorderPainted(true);
         button.setFont(new Font("Arial", Font.BOLD, 13));
         button.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         button.addActionListener(listener);
@@ -139,12 +143,12 @@ public class MainDashboard extends JFrame {
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                button.setBackground(new Color(100, 149, 237));
+                button.setBackground(Color.GREEN.brighter());
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(Color.GREEN);
             }
         });
 

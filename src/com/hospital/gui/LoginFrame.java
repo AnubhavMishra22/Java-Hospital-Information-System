@@ -19,6 +19,8 @@ public class LoginFrame extends JFrame {
     private JButton exitButton;
 
     public LoginFrame() {
+        // Force custom button colors on Windows
+        UIManager.put("Button.select", new Color(70, 130, 180));
         initComponents();
         setLocationRelativeTo(null);
     }
@@ -85,18 +87,24 @@ public class LoginFrame extends JFrame {
 
         loginButton = new JButton("Login");
         loginButton.setFont(new Font("Arial", Font.BOLD, 14));
-        loginButton.setBackground(new Color(70, 130, 180));
-        loginButton.setForeground(Color.WHITE);
+        loginButton.setBackground(Color.GREEN);
+        loginButton.setForeground(Color.BLACK);
         loginButton.setFocusPainted(false);
+        loginButton.setOpaque(true);
+        loginButton.setBorderPainted(false);
         loginButton.setPreferredSize(new Dimension(120, 35));
+        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         loginButton.addActionListener(e -> performLogin());
 
         exitButton = new JButton("Exit");
         exitButton.setFont(new Font("Arial", Font.BOLD, 14));
-        exitButton.setBackground(new Color(220, 20, 60));
-        exitButton.setForeground(Color.WHITE);
+        exitButton.setBackground(Color.RED);
+        exitButton.setForeground(Color.BLACK);
         exitButton.setFocusPainted(false);
+        exitButton.setOpaque(true);
+        exitButton.setBorderPainted(false);
         exitButton.setPreferredSize(new Dimension(120, 35));
+        exitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         exitButton.addActionListener(e -> System.exit(0));
 
         buttonPanel.add(loginButton);

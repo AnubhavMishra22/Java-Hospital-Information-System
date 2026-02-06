@@ -87,8 +87,10 @@ public class FileTransferPanel extends JPanel {
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.CENTER;
         JButton sendButton = new JButton("Send File");
-        sendButton.setBackground(new Color(34, 139, 34));
-        sendButton.setForeground(Color.WHITE);
+        sendButton.setBackground(Color.GREEN);
+        sendButton.setForeground(Color.BLACK);
+        sendButton.setOpaque(true);
+        sendButton.setBorderPainted(true);
         sendButton.setFont(new Font("Arial", Font.BOLD, 14));
         sendButton.setPreferredSize(new Dimension(150, 35));
         sendButton.addActionListener(e -> sendFile());

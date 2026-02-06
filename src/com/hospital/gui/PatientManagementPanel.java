@@ -52,8 +52,10 @@ public class PatientManagementPanel extends JPanel {
         refreshButton.addActionListener(e -> loadPatients());
 
         JButton addButton = new JButton("Add New Patient");
-        addButton.setBackground(new Color(34, 139, 34));
-        addButton.setForeground(Color.WHITE);
+        addButton.setBackground(Color.GREEN);
+        addButton.setForeground(Color.BLACK);
+        addButton.setOpaque(true);
+        addButton.setBorderPainted(true);
         addButton.addActionListener(e -> showAddPatientDialog());
 
         searchPanel.add(searchLabel);
@@ -182,7 +184,16 @@ public class PatientManagementPanel extends JPanel {
 
         JPanel buttonPanel = new JPanel();
         JButton saveButton = new JButton("Save");
+        saveButton.setBackground(Color.GREEN);
+        saveButton.setForeground(Color.BLACK);
+        saveButton.setOpaque(true);
+        saveButton.setBorderPainted(true);
+
         JButton cancelButton = new JButton("Cancel");
+        cancelButton.setBackground(Color.RED);
+        cancelButton.setForeground(Color.BLACK);
+        cancelButton.setOpaque(true);
+        cancelButton.setBorderPainted(true);
 
         saveButton.addActionListener(e -> {
             try {
