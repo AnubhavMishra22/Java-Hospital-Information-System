@@ -15,7 +15,7 @@ public class DatabaseConnection {
     // Database configuration
     private static final String DB_URL = "jdbc:mysql://localhost:3306/hospital_management";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = ""; // Set your MySQL password
+    private static final String DB_PASSWORD = "root"; // MySQL password
 
     private static Connection connection = null;
 

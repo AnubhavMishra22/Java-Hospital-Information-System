@@ -55,8 +55,10 @@ public class AppointmentPanel extends JPanel {
         refreshButton.addActionListener(e -> loadAppointments());
 
         JButton addButton = new JButton("Schedule Appointment");
-        addButton.setBackground(new Color(34, 139, 34));
-        addButton.setForeground(Color.WHITE);
+        addButton.setBackground(Color.GREEN);
+        addButton.setForeground(Color.BLACK);
+        addButton.setOpaque(true);
+        addButton.setBorderPainted(true);
         addButton.addActionListener(e -> showAddAppointmentDialog());
 
         controlPanel.add(filterLabel);
@@ -88,8 +90,10 @@ public class AppointmentPanel extends JPanel {
         completeButton.addActionListener(e -> markCompleted());
 
         JButton cancelButton = new JButton("Cancel Appointment");
-        cancelButton.setBackground(new Color(220, 20, 60));
-        cancelButton.setForeground(Color.WHITE);
+        cancelButton.setBackground(Color.RED);
+        cancelButton.setForeground(Color.BLACK);
+        cancelButton.setOpaque(true);
+        cancelButton.setBorderPainted(true);
         cancelButton.addActionListener(e -> cancelAppointment());
 
         buttonPanel.add(completeButton);

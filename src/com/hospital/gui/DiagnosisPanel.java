@@ -54,8 +54,10 @@ public class DiagnosisPanel extends JPanel {
         searchButton.addActionListener(e -> searchDiagnoses());
 
         JButton addButton = new JButton("Add Diagnosis");
-        addButton.setBackground(new Color(34, 139, 34));
-        addButton.setForeground(Color.WHITE);
+        addButton.setBackground(Color.GREEN);
+        addButton.setForeground(Color.BLACK);
+        addButton.setOpaque(true);
+        addButton.setBorderPainted(true);
         addButton.addActionListener(e -> showAddDiagnosisDialog());
 
         controlPanel.add(searchLabel);
