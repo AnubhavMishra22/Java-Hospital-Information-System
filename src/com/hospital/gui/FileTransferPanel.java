@@ -5,6 +5,7 @@ import com.hospital.database.UserDAO;
 import com.hospital.model.User;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -148,13 +149,13 @@ public class FileTransferPanel extends JPanel {
         fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 
         // Add common file type filters for convenience
-        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
             "PDF Documents (*.pdf)", "pdf"));
-        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
             "Images (*.jpg, *.png, *.gif)", "jpg", "jpeg", "png", "gif"));
-        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
             "Text Files (*.txt)", "txt"));
-        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
             "Documents (*.doc, *.docx)", "doc", "docx"));
 
         // Set "All Files" as the default filter
