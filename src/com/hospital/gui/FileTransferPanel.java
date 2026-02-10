@@ -141,6 +141,25 @@ public class FileTransferPanel extends JPanel {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
+        // Accept all files by default to ensure files are visible
+        fileChooser.setAcceptAllFileFilterUsed(true);
+
+        // Set current directory to user's home for easier navigation
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+
+        // Add common file type filters for convenience
+        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "PDF Documents (*.pdf)", "pdf"));
+        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "Images (*.jpg, *.png, *.gif)", "jpg", "jpeg", "png", "gif"));
+        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "Text Files (*.txt)", "txt"));
+        fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+            "Documents (*.doc, *.docx)", "doc", "docx"));
+
+        // Set "All Files" as the default filter
+        fileChooser.setFileFilter(fileChooser.getAcceptAllFileFilter());
+
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
