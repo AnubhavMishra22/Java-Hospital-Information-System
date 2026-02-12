@@ -14,6 +14,7 @@ public class HospitalServer {
     private static final int PORT = 8888;
     private static Set<ClientHandler> clientHandlers = ConcurrentHashMap.newKeySet();
     private static Map<Integer, ClientHandler> userClientMap = new ConcurrentHashMap<>();
+    private static volatile boolean running = true;
 
     public static void main(String[] args) {
         System.out.println("===========================================");
@@ -21,19 +22,35 @@ public class HospitalServer {
         System.out.println("===========================================");
         System.out.println("Server starting on port " + PORT + "...");
 
+        // Add shutdown hook for graceful shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("\n\nShutdown signal received. Closing all connections...");
+            running = false;
+            shutdownServer();
+            System.out.println("Server shutdown complete.");
+        }));
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Server started successfully!");
             System.out.println("Waiting for client connections...\n");
 
-            while (true) {
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress());
+            while (running) {
+                try {
+                    Socket clientSocket = serverSocket.accept();
+                    System.out.println("New client connected: " + clientSocket.getInetAddress());
 
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
-                clientHandlers.add(clientHandler);
+                    ClientHandler clientHandler = new ClientHandler(clientSocket);
+                    clientHandlers.add(clientHandler);
 
-                Thread thread = new Thread(clientHandler);
-                thread.start();
+                    Thread thread = new Thread(clientHandler);
+                    thread.setDaemon(true); // Allow JVM to exit when main thread ends
+                    thread.start();
+                } catch (SocketException e) {
+                    if (!running) {
+                        break; // Server is shutting down
+                    }
+                    throw e;
+                }
             }
         } catch (IOException e) {
             System.err.println("Server error: " + e.getMessage());
@@ -78,6 +95,22 @@ public class HospitalServer {
     public static void registerUser(int userId, ClientHandler handler) {
         userClientMap.put(userId, handler);
         System.out.println("User ID " + userId + " registered with socket connection");
+    }
+
+    /**
+     * Shutdown server and close all connections
+     */
+    private static void shutdownServer() {
+        // Close all client connections
+        for (ClientHandler handler : clientHandlers) {
+            try {
+                handler.close();
+            } catch (Exception e) {
+                // Ignore errors during shutdown
+            }
+        }
+        clientHandlers.clear();
+        userClientMap.clear();
     }
 
     /**
@@ -189,6 +222,13 @@ public class HospitalServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        /**
+         * Force close this client handler
+         */
+        public void close() {
+            cleanup();
         }
     }
 }

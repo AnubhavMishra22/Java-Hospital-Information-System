@@ -51,9 +51,8 @@ public class MainDashboard extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                if (socketClient != null) {
-                    socketClient.disconnect();
-                }
+                cleanup();
+                System.exit(0);
             }
         });
     }
@@ -271,6 +270,22 @@ public class MainDashboard extends JFrame {
         });
     }
 
+    /**
+     * Cleanup resources before closing or logging out
+     * Note: Database connection uses singleton pattern and should not be closed here
+     */
+    private void cleanup() {
+        try {
+            if (socketClient != null) {
+                socketClient.disconnect();
+            }
+            // Do NOT close DatabaseConnection - it uses a singleton pattern
+            // Closing it will break subsequent logins/operations
+        } catch (Exception e) {
+            System.err.println("Error during cleanup: " + e.getMessage());
+        }
+    }
+
     private void logout() {
         int option = JOptionPane.showConfirmDialog(this,
             "Are you sure you want to logout?",
@@ -278,9 +293,7 @@ public class MainDashboard extends JFrame {
             JOptionPane.YES_NO_OPTION);
 
         if (option == JOptionPane.YES_OPTION) {
-            if (socketClient != null) {
-                socketClient.disconnect();
-            }
+            cleanup();
             this.dispose();
             SwingUtilities.invokeLater(() -> {
                 LoginFrame loginFrame = new LoginFrame();
