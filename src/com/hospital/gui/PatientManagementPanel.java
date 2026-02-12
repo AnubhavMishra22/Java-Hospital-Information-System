@@ -264,11 +264,124 @@ public class PatientManagementPanel extends JPanel {
     private void editPatient() {
         int selectedRow = patientTable.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Please select a patient");
+            JOptionPane.showMessageDialog(this, "Please select a patient to edit");
             return;
         }
 
-        JOptionPane.showMessageDialog(this, "Edit functionality - Implementation similar to Add Patient");
+        int patientId = (int) tableModel.getValueAt(selectedRow, 0);
+        Patient patient = PatientDAO.getPatientById(patientId);
+
+        if (patient == null) {
+            JOptionPane.showMessageDialog(this, "Patient not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        showEditPatientDialog(patient);
+    }
+
+    private void showEditPatientDialog(Patient patient) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Patient", true);
+        dialog.setSize(500, 650);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Pre-fill fields with existing patient data
+        JTextField firstNameField = new JTextField(patient.getFirstName(), 20);
+        JTextField lastNameField = new JTextField(patient.getLastName(), 20);
+        JTextField dobField = new JTextField(patient.getDateOfBirth().toString(), 20);
+        JComboBox<Patient.Gender> genderCombo = new JComboBox<>(Patient.Gender.values());
+        genderCombo.setSelectedItem(patient.getGender());
+        JTextField bloodGroupField = new JTextField(patient.getBloodGroup(), 10);
+        JTextField phoneField = new JTextField(patient.getPhone(), 20);
+        JTextField emailField = new JTextField(patient.getEmail(), 20);
+        JTextArea addressArea = new JTextArea(patient.getAddress(), 3, 20);
+        addressArea.setLineWrap(true);
+        addressArea.setWrapStyleWord(true);
+        JTextField emergencyContactField = new JTextField(patient.getEmergencyContact(), 20);
+        JTextField emergencyPhoneField = new JTextField(patient.getEmergencyPhone(), 20);
+        JComboBox<Patient.PatientStatus> statusCombo = new JComboBox<>(Patient.PatientStatus.values());
+        statusCombo.setSelectedItem(patient.getStatus());
+
+        int row = 0;
+        addFormField(panel, gbc, row++, "First Name:", firstNameField);
+        addFormField(panel, gbc, row++, "Last Name:", lastNameField);
+        addFormField(panel, gbc, row++, "Date of Birth (YYYY-MM-DD):", dobField);
+        addFormField(panel, gbc, row++, "Gender:", genderCombo);
+        addFormField(panel, gbc, row++, "Blood Group:", bloodGroupField);
+        addFormField(panel, gbc, row++, "Phone:", phoneField);
+        addFormField(panel, gbc, row++, "Email:", emailField);
+        addFormField(panel, gbc, row++, "Address:", new JScrollPane(addressArea));
+        addFormField(panel, gbc, row++, "Emergency Contact:", emergencyContactField);
+        addFormField(panel, gbc, row++, "Emergency Phone:", emergencyPhoneField);
+        addFormField(panel, gbc, row++, "Status:", statusCombo);
+
+        JPanel buttonPanel = new JPanel();
+        JButton saveButton = new JButton("Update");
+        saveButton.setBackground(Color.GREEN);
+        saveButton.setForeground(Color.BLACK);
+        saveButton.setOpaque(true);
+        saveButton.setBorderPainted(true);
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.setBackground(Color.RED);
+        cancelButton.setForeground(Color.BLACK);
+        cancelButton.setOpaque(true);
+        cancelButton.setBorderPainted(true);
+
+        saveButton.addActionListener(e -> {
+            try {
+                // Update patient object with new values
+                patient.setFirstName(firstNameField.getText().trim());
+                patient.setLastName(lastNameField.getText().trim());
+                patient.setDateOfBirth(Date.valueOf(dobField.getText().trim()));
+                patient.setGender((Patient.Gender) genderCombo.getSelectedItem());
+                patient.setBloodGroup(bloodGroupField.getText().trim());
+                patient.setPhone(phoneField.getText().trim());
+                patient.setEmail(emailField.getText().trim());
+                patient.setAddress(addressArea.getText().trim());
+                patient.setEmergencyContact(emergencyContactField.getText().trim());
+                patient.setEmergencyPhone(emergencyPhoneField.getText().trim());
+                patient.setStatus((Patient.PatientStatus) statusCombo.getSelectedItem());
+
+                boolean success = PatientDAO.updatePatient(patient);
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Patient updated successfully!");
+                    dialog.dispose();
+                    loadPatients();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update patient", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Invalid date format. Please use YYYY-MM-DD format.\nExample: 1990-01-15",
+                    "Validation Error",
+                    JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                String errorMsg = ex.getMessage() != null ? ex.getMessage() : "Unknown error occurred";
+                JOptionPane.showMessageDialog(dialog,
+                    ex.getClass().getSimpleName() + ": " + errorMsg,
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 2;
+        panel.add(buttonPanel, gbc);
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
     }
 
     private void addFormField(JPanel panel, GridBagConstraints gbc, int row, String label, Component field) {
