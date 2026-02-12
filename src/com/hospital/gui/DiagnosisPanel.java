@@ -180,7 +180,26 @@ public class DiagnosisPanel extends JPanel {
                     return;
                 }
 
-                int appointmentId = Integer.parseInt(appointmentIdField.getText().trim());
+                // Validate appointment ID
+                String appointmentIdText = appointmentIdField.getText().trim();
+                if (appointmentIdText.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Please enter Appointment ID");
+                    return;
+                }
+
+                int appointmentId;
+                try {
+                    appointmentId = Integer.parseInt(appointmentIdText);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(dialog, "Invalid Appointment ID. Please enter a number.");
+                    return;
+                }
+
+                // Validate required fields
+                if (symptomsArea.getText().trim().isEmpty() || diagnosisArea.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Symptoms and Diagnosis fields are required");
+                    return;
+                }
 
                 Diagnosis diagnosis = new Diagnosis(
                     appointmentId,
@@ -193,7 +212,12 @@ public class DiagnosisPanel extends JPanel {
 
                 String followUpDateStr = followUpDateField.getText().trim();
                 if (!followUpDateStr.isEmpty()) {
-                    diagnosis.setFollowUpDate(Date.valueOf(followUpDateStr));
+                    try {
+                        diagnosis.setFollowUpDate(Date.valueOf(followUpDateStr));
+                    } catch (IllegalArgumentException ex) {
+                        JOptionPane.showMessageDialog(dialog, "Invalid date format. Use YYYY-MM-DD (e.g., 2026-03-15)");
+                        return;
+                    }
                 }
 
                 int diagnosisId = DiagnosisDAO.addDiagnosis(diagnosis);
@@ -201,10 +225,14 @@ public class DiagnosisPanel extends JPanel {
                     JOptionPane.showMessageDialog(dialog, "Diagnosis added successfully!");
                     dialog.dispose();
                 } else {
-                    JOptionPane.showMessageDialog(dialog, "Failed to add diagnosis", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(dialog, "Failed to add diagnosis. Check if Appointment ID exists.", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dialog, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                // Show both exception type and message
+                String errorMsg = ex.getClass().getSimpleName() + ": " +
+                                 (ex.getMessage() != null ? ex.getMessage() : "Unknown error");
+                JOptionPane.showMessageDialog(dialog, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace(); // Print to console for debugging
             }
         });
 

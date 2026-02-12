@@ -129,7 +129,7 @@ public class MessagingPanel extends JPanel {
 
     private void showComposeDialog() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Compose Message", true);
-        dialog.setSize(500, 400);
+        dialog.setSize(700, 550);  // Increased from 500x400 to 700x550
         dialog.setLocationRelativeTo(this);
 
         JPanel panel = new JPanel(new GridBagLayout());
@@ -140,8 +140,11 @@ public class MessagingPanel extends JPanel {
 
         List<User> users = UserDAO.getAllUsers();
         JComboBox<User> recipientCombo = new JComboBox<>(users.toArray(new User[0]));
-        JTextField subjectField = new JTextField(30);
-        JTextArea messageArea = new JTextArea(10, 30);
+        JTextField subjectField = new JTextField(40);  // Wider: 40 instead of 30
+        JTextArea messageArea = new JTextArea(15, 50);  // Larger: 15x50 instead of 10x30
+        messageArea.setFont(new Font("Arial", Font.PLAIN, 14));  // Larger font
+        messageArea.setLineWrap(true);  // Enable line wrapping
+        messageArea.setWrapStyleWord(true);  // Wrap at word boundaries
 
         int row = 0;
         addFormField(panel, gbc, row++, "To:", recipientCombo);
@@ -217,15 +220,17 @@ public class MessagingPanel extends JPanel {
         for (Message message : messages) {
             if (message.getMessageId() == messageId) {
                 JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "View Message", true);
-                dialog.setSize(500, 350);
+                dialog.setSize(800, 600);  // Increased from 500x350 to 800x600
                 dialog.setLocationRelativeTo(this);
 
                 JPanel panel = new JPanel(new BorderLayout(10, 10));
                 panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-                JTextArea messageArea = new JTextArea();
+                JTextArea messageArea = new JTextArea(20, 60);  // Set explicit rows and columns
                 messageArea.setEditable(false);
-                messageArea.setFont(new Font("Arial", Font.PLAIN, 12));
+                messageArea.setFont(new Font("Arial", Font.PLAIN, 14));  // Larger font: 14 instead of 12
+                messageArea.setLineWrap(true);  // Enable line wrapping
+                messageArea.setWrapStyleWord(true);  // Wrap at word boundaries
                 messageArea.setText(String.format(
                     "From: %s\nDate: %s\nSubject: %s\n\n%s",
                     message.getSenderName(), message.getSentAt(),
