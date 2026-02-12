@@ -7,6 +7,7 @@ import com.hospital.model.User;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.*;
 
 /**
  * Main Dashboard for Hospital Management System
@@ -158,19 +159,106 @@ public class MainDashboard extends JFrame {
     private void showWelcomePanel() {
         contentPanel.removeAll();
 
-        JPanel welcomePanel = new JPanel();
-        welcomePanel.setLayout(new GridBagLayout());
-        welcomePanel.setBackground(Color.WHITE);
+        // Create main welcome panel with gradient background
+        JPanel welcomePanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                int w = getWidth();
+                int h = getHeight();
+                Color color1 = new Color(135, 206, 250); // Light sky blue
+                Color color2 = new Color(70, 130, 180);  // Steel blue
+                GradientPaint gp = new GradientPaint(0, 0, color1, 0, h, color2);
+                g2d.setPaint(gp);
+                g2d.fillRect(0, 0, w, h);
+            }
+        };
+        welcomePanel.setLayout(new BorderLayout(20, 20));
+        welcomePanel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
 
-        JLabel welcomeText = new JLabel("<html><center><h1>Welcome to Hospital Management System</h1>" +
-            "<p>Select an option from the menu to get started</p></center></html>");
-        welcomeText.setFont(new Font("Arial", Font.PLAIN, 16));
+        // Top welcome message
+        JPanel topPanel = new JPanel();
+        topPanel.setOpaque(false);
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
 
-        welcomePanel.add(welcomeText);
+        JLabel welcomeTitle = new JLabel("Welcome, " + currentUser.getFullName() + "!");
+        welcomeTitle.setFont(new Font("Arial", Font.BOLD, 36));
+        welcomeTitle.setForeground(Color.WHITE);
+        welcomeTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel subtitle = new JLabel("Hospital Management System Dashboard");
+        subtitle.setFont(new Font("Arial", Font.PLAIN, 20));
+        subtitle.setForeground(new Color(240, 248, 255));
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        topPanel.add(Box.createVerticalStrut(20));
+        topPanel.add(welcomeTitle);
+        topPanel.add(Box.createVerticalStrut(10));
+        topPanel.add(subtitle);
+        topPanel.add(Box.createVerticalStrut(40));
+
+        // Center panel with dashboard cards
+        JPanel centerPanel = new JPanel(new GridLayout(2, 2, 20, 20));
+        centerPanel.setOpaque(false);
+
+        // Get statistics
+        int totalPatients = com.hospital.database.PatientDAO.getAllPatients().size();
+        int totalAppointments = com.hospital.database.AppointmentDAO.getUpcomingAppointments().size();
+        int unreadMessages = com.hospital.database.MessageDAO.getUnreadCount(currentUser.getUserId());
+
+        // Create dashboard cards
+        centerPanel.add(createDashboardCard("Total Patients", String.valueOf(totalPatients), new Color(46, 204, 113)));
+        centerPanel.add(createDashboardCard("Upcoming Appointments", String.valueOf(totalAppointments), new Color(52, 152, 219)));
+        centerPanel.add(createDashboardCard("Unread Messages", String.valueOf(unreadMessages), new Color(241, 196, 15)));
+        centerPanel.add(createDashboardCard("Your Role", currentUser.getRole().toString(), new Color(155, 89, 182)));
+
+        // Bottom message
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setOpaque(false);
+        JLabel instructionLabel = new JLabel("<html><center>Select an option from the left menu to get started<br>" +
+            "Quick access to all hospital management features</center></html>");
+        instructionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        instructionLabel.setForeground(Color.WHITE);
+        instructionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        bottomPanel.add(instructionLabel);
+
+        welcomePanel.add(topPanel, BorderLayout.NORTH);
+        welcomePanel.add(centerPanel, BorderLayout.CENTER);
+        welcomePanel.add(bottomPanel, BorderLayout.SOUTH);
 
         contentPanel.add(welcomePanel, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
+    }
+
+    private JPanel createDashboardCard(String title, String value, Color bgColor) {
+        JPanel card = new JPanel();
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBackground(bgColor);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.WHITE, 2),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        valueLabel.setForeground(Color.WHITE);
+        valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        card.add(Box.createVerticalGlue());
+        card.add(valueLabel);
+        card.add(Box.createVerticalStrut(10));
+        card.add(titleLabel);
+        card.add(Box.createVerticalGlue());
+
+        return card;
     }
 
     private void showPatientManagement() {
