@@ -127,6 +127,51 @@ public class DiagnosisDAO {
     }
 
     /**
+     * Get all diagnoses ordered by most recent first.
+     */
+    public static List<Diagnosis> getAllDiagnoses() {
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        List<Diagnosis> diagnoses = new ArrayList<>();
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return diagnoses;
+            }
+            String query = "SELECT d.diagnosis_id, d.appointment_id, d.patient_id, d.doctor_id, " +
+                          "d.diagnosis_date, d.symptoms, d.diagnosis, d.notes, d.follow_up_date, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) AS patient_name, " +
+                          "u.full_name AS doctor_name " +
+                          "FROM diagnoses d " +
+                          "INNER JOIN patients p ON d.patient_id = p.patient_id " +
+                          "LEFT JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                          "LEFT JOIN users u ON doc.user_id = u.user_id " +
+                          "ORDER BY d.diagnosis_date DESC";
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(query);
+
+            while (rs.next()) {
+                diagnoses.add(extractDiagnosisFromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("DiagnosisDAO.getAllDiagnoses: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            try {
+                if (stmt != null) {
+                    stmt.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return diagnoses;
+    }
+
+    /**
      * Get diagnosis by ID
      */
     public static Diagnosis getDiagnosisById(int diagnosisId) {

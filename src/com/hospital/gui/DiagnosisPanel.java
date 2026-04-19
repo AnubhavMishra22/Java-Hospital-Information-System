@@ -100,38 +100,49 @@ public class DiagnosisPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Show recent diagnoses by default so panel is never blank on open.
+        loadRecentDiagnoses();
     }
 
     private void searchDiagnoses() {
         String patientIdStr = searchField.getText().trim();
         if (patientIdStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a patient ID");
+            loadRecentDiagnoses();
             return;
         }
 
         try {
             int patientId = Integer.parseInt(patientIdStr);
-            tableModel.setRowCount(0);
             List<Diagnosis> diagnoses = DiagnosisDAO.getDiagnosesByPatient(patientId);
-
-            for (Diagnosis diagnosis : diagnoses) {
-                Object[] row = {
-                    diagnosis.getDiagnosisId(),
-                    diagnosis.getPatientName(),
-                    diagnosis.getDoctorName(),
-                    diagnosis.getDiagnosisDate(),
-                    truncateText(diagnosis.getSymptoms(), 30),
-                    truncateText(diagnosis.getDiagnosis(), 30),
-                    diagnosis.getFollowUpDate()
-                };
-                tableModel.addRow(row);
-            }
+            populateDiagnosisTable(diagnoses);
 
             if (diagnoses.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No diagnoses found for this patient");
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Invalid patient ID", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void loadRecentDiagnoses() {
+        List<Diagnosis> diagnoses = DiagnosisDAO.getAllDiagnoses();
+        populateDiagnosisTable(diagnoses);
+    }
+
+    private void populateDiagnosisTable(List<Diagnosis> diagnoses) {
+        tableModel.setRowCount(0);
+        for (Diagnosis diagnosis : diagnoses) {
+            Object[] row = {
+                diagnosis.getDiagnosisId(),
+                diagnosis.getPatientName(),
+                diagnosis.getDoctorName(),
+                diagnosis.getDiagnosisDate(),
+                truncateText(diagnosis.getSymptoms(), 30),
+                truncateText(diagnosis.getDiagnosis(), 30),
+                diagnosis.getFollowUpDate()
+            };
+            tableModel.addRow(row);
         }
     }
 
@@ -286,6 +297,9 @@ public class DiagnosisPanel extends JPanel {
                 int diagnosisId = DiagnosisDAO.addDiagnosis(diagnosis);
                 if (diagnosisId > 0) {
                     JOptionPane.showMessageDialog(dialog, "Diagnosis added successfully!");
+                    // Immediately refresh table for this patient so the new entry is visible.
+                    searchField.setText(String.valueOf(selectedPatient.getPatientId()));
+                    searchDiagnoses();
                     dialog.dispose();
                 } else {
                     String detail = DiagnosisDAO.getLastAddDiagnosisError();
