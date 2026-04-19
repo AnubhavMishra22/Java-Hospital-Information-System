@@ -53,7 +53,9 @@ public class DiagnosisDAO {
             }
 
             int result = pst.executeUpdate();
-            if (result > 0) {
+            if (result == 0) {
+                lastAddDiagnosisError = "INSERT affected 0 rows (nothing was written). Check foreign keys and DB permissions.";
+            } else {
                 rs = pst.getGeneratedKeys();
                 if (rs != null && rs.next()) {
                     diagnosisId = rs.getInt(1);
@@ -67,6 +69,9 @@ public class DiagnosisDAO {
                             diagnosisId = rsId.getInt(1);
                         }
                     }
+                }
+                if (diagnosisId <= 0) {
+                    lastAddDiagnosisError = "Insert appeared to run but no new diagnosis_id was returned. Try reconnecting to MySQL.";
                 }
             }
         } catch (SQLException e) {

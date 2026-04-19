@@ -289,13 +289,15 @@ public class DiagnosisPanel extends JPanel {
                     dialog.dispose();
                 } else {
                     String detail = DiagnosisDAO.getLastAddDiagnosisError();
-                    String msg = "Could not save diagnosis.";
+                    String msg = "Could not save this diagnosis.\n\n";
                     if (detail != null && !detail.isEmpty()) {
-                        msg += "\n\nDatabase said:\n" + detail;
+                        msg += "Reason:\n" + detail;
                     } else {
-                        msg += "\n\nIf this persists, check the console for errors.";
+                        msg += "No database reason was captured. Check the terminal/console for SQL errors.";
                     }
-                    JOptionPane.showMessageDialog(dialog, msg, "Error", JOptionPane.ERROR_MESSAGE);
+                    msg += "\n\n— If this dialog still mentions typing an \"Appointment ID\", you are running an old build: "
+                        + "use Clean and Build in NetBeans, or delete the dist/ and build/ folders and run again.";
+                    JOptionPane.showMessageDialog(dialog, msg, "Diagnosis save failed", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 // Show both exception type and message
