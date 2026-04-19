@@ -7,6 +7,7 @@ import com.hospital.database.AppointmentDAO;
 import com.hospital.model.Diagnosis;
 import com.hospital.model.Patient;
 import com.hospital.model.Doctor;
+import com.hospital.model.Appointment;
 import com.hospital.model.User;
 
 import javax.swing.*;
@@ -135,7 +136,12 @@ public class DiagnosisPanel extends JPanel {
     }
 
     private void showAddDiagnosisDialog() {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Add Diagnosis", true);
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner == null) {
+            JOptionPane.showMessageDialog(this, "Cannot open dialog.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JDialog dialog = new JDialog(owner, "Add Diagnosis", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(600, 550);
         dialog.setLocationRelativeTo(this);
 
@@ -192,6 +198,23 @@ public class DiagnosisPanel extends JPanel {
                     appointmentId = Integer.parseInt(appointmentIdText);
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dialog, "Invalid Appointment ID. Please enter a number.");
+                    return;
+                }
+
+                Appointment appt = AppointmentDAO.getAppointmentById(appointmentId);
+                if (appt == null) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "No appointment found with that ID. Schedule an appointment first, then use its ID here.");
+                    return;
+                }
+                if (appt.getPatientId() != selectedPatient.getPatientId()) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "The selected patient does not match this appointment.");
+                    return;
+                }
+                if (appt.getDoctorId() != selectedDoctor.getDoctorId()) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "The selected doctor does not match this appointment.");
                     return;
                 }
 
@@ -257,39 +280,51 @@ public class DiagnosisPanel extends JPanel {
             return;
         }
 
-        int diagnosisId = (int) tableModel.getValueAt(selectedRow, 0);
+        Object idVal = tableModel.getValueAt(selectedRow, 0);
+        if (idVal == null) {
+            JOptionPane.showMessageDialog(this, "Invalid row selection.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        int diagnosisId = ((Number) idVal).intValue();
         Diagnosis diagnosis = DiagnosisDAO.getDiagnosisById(diagnosisId);
 
-        if (diagnosis != null) {
-            JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Diagnosis Details", true);
-            dialog.setSize(500, 450);
-            dialog.setLocationRelativeTo(this);
-
-            JPanel panel = new JPanel(new BorderLayout(10, 10));
-            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-            JTextArea detailsArea = new JTextArea();
-            detailsArea.setEditable(false);
-            detailsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-            detailsArea.setText(String.format(
-                "Diagnosis ID: %d\nPatient: %s\nDoctor: %s\nDate: %s\n\n" +
-                "SYMPTOMS:\n%s\n\nDIAGNOSIS:\n%s\n\nNOTES:\n%s\n\nFollow-up Date: %s",
-                diagnosis.getDiagnosisId(), diagnosis.getPatientName(), diagnosis.getDoctorName(),
-                diagnosis.getDiagnosisDate(), diagnosis.getSymptoms(), diagnosis.getDiagnosis(),
-                diagnosis.getNotes(), diagnosis.getFollowUpDate()
-            ));
-
-            panel.add(new JScrollPane(detailsArea), BorderLayout.CENTER);
-
-            JButton closeButton = new JButton("Close");
-            closeButton.addActionListener(e -> dialog.dispose());
-            JPanel buttonPanel = new JPanel();
-            buttonPanel.add(closeButton);
-            panel.add(buttonPanel, BorderLayout.SOUTH);
-
-            dialog.add(panel);
-            dialog.setVisible(true);
+        if (diagnosis == null) {
+            JOptionPane.showMessageDialog(this,
+                "Could not load diagnosis details. If this persists, check the database connection.",
+                "Not found",
+                JOptionPane.WARNING_MESSAGE);
+            return;
         }
+
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(owner, "Diagnosis Details", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(500, 450);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JTextArea detailsArea = new JTextArea();
+        detailsArea.setEditable(false);
+        detailsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        detailsArea.setText(String.format(
+            "Diagnosis ID: %d\nPatient: %s\nDoctor: %s\nDate: %s\n\n" +
+            "SYMPTOMS:\n%s\n\nDIAGNOSIS:\n%s\n\nNOTES:\n%s\n\nFollow-up Date: %s",
+            diagnosis.getDiagnosisId(), diagnosis.getPatientName(), diagnosis.getDoctorName(),
+            diagnosis.getDiagnosisDate(), diagnosis.getSymptoms(), diagnosis.getDiagnosis(),
+            diagnosis.getNotes(), diagnosis.getFollowUpDate()
+        ));
+
+        panel.add(new JScrollPane(detailsArea), BorderLayout.CENTER);
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> dialog.dispose());
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(closeButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(panel);
+        dialog.setVisible(true);
     }
 
     private String truncateText(String text, int length) {

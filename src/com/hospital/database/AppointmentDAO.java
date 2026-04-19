@@ -75,6 +75,43 @@ public class AppointmentDAO {
     }
 
     /**
+     * Get a single appointment by ID (with patient and doctor display names).
+     */
+    public static Appointment getAppointmentById(int appointmentId) {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return null;
+            }
+            String query = "SELECT a.*, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
+                          "u.full_name as doctor_name " +
+                          "FROM appointments a " +
+                          "INNER JOIN patients p ON a.patient_id = p.patient_id " +
+                          "INNER JOIN doctors d ON a.doctor_id = d.doctor_id " +
+                          "INNER JOIN users u ON d.user_id = u.user_id " +
+                          "WHERE a.appointment_id = ?";
+            pst = conn.prepareStatement(query);
+            pst.setInt(1, appointmentId);
+
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return extractAppointmentFromResultSet(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return null;
+    }
+
+    /**
      * Get appointments by date
      */
     public static List<Appointment> getAppointmentsByDate(Date date) {

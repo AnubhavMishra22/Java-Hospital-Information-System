@@ -21,6 +21,9 @@ public class DiagnosisDAO {
 
         try {
             conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return -1;
+            }
             String query = "INSERT INTO diagnoses (appointment_id, patient_id, doctor_id, " +
                           "symptoms, diagnosis, notes, follow_up_date) " +
                           "VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -30,8 +33,16 @@ public class DiagnosisDAO {
             pst.setInt(3, diagnosis.getDoctorId());
             pst.setString(4, diagnosis.getSymptoms());
             pst.setString(5, diagnosis.getDiagnosis());
-            pst.setString(6, diagnosis.getNotes());
-            pst.setDate(7, diagnosis.getFollowUpDate());
+            if (diagnosis.getNotes() != null) {
+                pst.setString(6, diagnosis.getNotes());
+            } else {
+                pst.setNull(6, Types.VARCHAR);
+            }
+            if (diagnosis.getFollowUpDate() != null) {
+                pst.setDate(7, diagnosis.getFollowUpDate());
+            } else {
+                pst.setNull(7, Types.DATE);
+            }
 
             int result = pst.executeUpdate();
             if (result > 0) {
@@ -41,6 +52,7 @@ public class DiagnosisDAO {
                 }
             }
         } catch (SQLException e) {
+            System.err.println("DiagnosisDAO.addDiagnosis: " + e.getMessage());
             e.printStackTrace();
         } finally {
             DatabaseConnection.closeResultSet(rs);
@@ -60,13 +72,17 @@ public class DiagnosisDAO {
 
         try {
             conn = DatabaseConnection.getConnection();
-            String query = "SELECT d.*, " +
-                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
-                          "u.full_name as doctor_name " +
+            if (conn == null) {
+                return diagnoses;
+            }
+            String query = "SELECT d.diagnosis_id, d.appointment_id, d.patient_id, d.doctor_id, " +
+                          "d.diagnosis_date, d.symptoms, d.diagnosis, d.notes, d.follow_up_date, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) AS patient_name, " +
+                          "u.full_name AS doctor_name " +
                           "FROM diagnoses d " +
                           "INNER JOIN patients p ON d.patient_id = p.patient_id " +
-                          "INNER JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
-                          "INNER JOIN users u ON doc.user_id = u.user_id " +
+                          "LEFT JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                          "LEFT JOIN users u ON doc.user_id = u.user_id " +
                           "WHERE d.patient_id = ? " +
                           "ORDER BY d.diagnosis_date DESC";
             pst = conn.prepareStatement(query);
@@ -77,6 +93,7 @@ public class DiagnosisDAO {
                 diagnoses.add(extractDiagnosisFromResultSet(rs));
             }
         } catch (SQLException e) {
+            System.err.println("DiagnosisDAO.getDiagnosesByPatient: " + e.getMessage());
             e.printStackTrace();
         } finally {
             DatabaseConnection.closeResultSet(rs);
@@ -96,13 +113,17 @@ public class DiagnosisDAO {
 
         try {
             conn = DatabaseConnection.getConnection();
-            String query = "SELECT d.*, " +
-                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
-                          "u.full_name as doctor_name " +
+            if (conn == null) {
+                return null;
+            }
+            String query = "SELECT d.diagnosis_id, d.appointment_id, d.patient_id, d.doctor_id, " +
+                          "d.diagnosis_date, d.symptoms, d.diagnosis, d.notes, d.follow_up_date, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) AS patient_name, " +
+                          "u.full_name AS doctor_name " +
                           "FROM diagnoses d " +
                           "INNER JOIN patients p ON d.patient_id = p.patient_id " +
-                          "INNER JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
-                          "INNER JOIN users u ON doc.user_id = u.user_id " +
+                          "LEFT JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                          "LEFT JOIN users u ON doc.user_id = u.user_id " +
                           "WHERE d.diagnosis_id = ?";
             pst = conn.prepareStatement(query);
             pst.setInt(1, diagnosisId);
@@ -112,6 +133,7 @@ public class DiagnosisDAO {
                 diagnosis = extractDiagnosisFromResultSet(rs);
             }
         } catch (SQLException e) {
+            System.err.println("DiagnosisDAO.getDiagnosisById: " + e.getMessage());
             e.printStackTrace();
         } finally {
             DatabaseConnection.closeResultSet(rs);
