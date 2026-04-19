@@ -137,4 +137,12 @@ public class Appointment {
     public void setDoctorName(String doctorName) {
         this.doctorName = doctorName;
     }
+
+    @Override
+    public String toString() {
+        String dateStr = appointmentDate != null ? appointmentDate.toString() : "?";
+        String timeStr = appointmentTime != null ? appointmentTime.toString() : "";
+        String doc = doctorName != null && !doctorName.isEmpty() ? doctorName : ("Doctor #" + doctorId);
+        return "#" + appointmentId + " — " + dateStr + (timeStr.isEmpty() ? "" : " " + timeStr) + " — " + doc;
+    }
 }

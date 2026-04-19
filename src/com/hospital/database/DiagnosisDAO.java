@@ -10,6 +10,12 @@ import java.util.List;
  */
 public class DiagnosisDAO {
 
+    private static volatile String lastAddDiagnosisError = null;
+
+    public static String getLastAddDiagnosisError() {
+        return lastAddDiagnosisError;
+    }
+
     /**
      * Add new diagnosis
      */
@@ -18,10 +24,12 @@ public class DiagnosisDAO {
         PreparedStatement pst = null;
         ResultSet rs = null;
         int diagnosisId = -1;
+        lastAddDiagnosisError = null;
 
         try {
             conn = DatabaseConnection.getConnection();
             if (conn == null) {
+                lastAddDiagnosisError = "Database connection is null.";
                 return -1;
             }
             String query = "INSERT INTO diagnoses (appointment_id, patient_id, doctor_id, " +
@@ -47,11 +55,22 @@ public class DiagnosisDAO {
             int result = pst.executeUpdate();
             if (result > 0) {
                 rs = pst.getGeneratedKeys();
-                if (rs.next()) {
+                if (rs != null && rs.next()) {
                     diagnosisId = rs.getInt(1);
+                }
+                DatabaseConnection.closeResultSet(rs);
+                rs = null;
+                if (diagnosisId <= 0) {
+                    try (Statement st = conn.createStatement();
+                         ResultSet rsId = st.executeQuery("SELECT LAST_INSERT_ID()")) {
+                        if (rsId.next()) {
+                            diagnosisId = rsId.getInt(1);
+                        }
+                    }
                 }
             }
         } catch (SQLException e) {
+            lastAddDiagnosisError = e.getMessage();
             System.err.println("DiagnosisDAO.addDiagnosis: " + e.getMessage());
             e.printStackTrace();
         } finally {

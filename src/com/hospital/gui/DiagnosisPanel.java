@@ -155,17 +155,62 @@ public class DiagnosisPanel extends JPanel {
         List<Patient> patients = PatientDAO.getAllPatients();
         List<Doctor> doctors = DoctorDAO.getAllDoctors();
 
-        JTextField appointmentIdField = new JTextField(15);
         JComboBox<Patient> patientCombo = new JComboBox<>(patients.toArray(new Patient[0]));
+        JComboBox<Appointment> appointmentCombo = new JComboBox<>();
         JComboBox<Doctor> doctorCombo = new JComboBox<>(doctors.toArray(new Doctor[0]));
+        doctorCombo.setEnabled(false);
         JTextArea symptomsArea = new JTextArea(4, 20);
         JTextArea diagnosisArea = new JTextArea(4, 20);
         JTextArea notesArea = new JTextArea(3, 20);
         JTextField followUpDateField = new JTextField(15); // Format: YYYY-MM-DD
 
+        Runnable loadAppointmentsForPatient = () -> {
+            appointmentCombo.removeAllItems();
+            Patient p = (Patient) patientCombo.getSelectedItem();
+            if (p == null) {
+                return;
+            }
+            List<Appointment> apps = AppointmentDAO.getAppointmentsByPatient(p.getPatientId());
+            for (Appointment a : apps) {
+                appointmentCombo.addItem(a);
+            }
+            if (!apps.isEmpty()) {
+                appointmentCombo.setSelectedIndex(0);
+            }
+        };
+
+        Runnable syncDoctorToAppointment = () -> {
+            Appointment a = (Appointment) appointmentCombo.getSelectedItem();
+            if (a == null) {
+                return;
+            }
+            for (int i = 0; i < doctorCombo.getItemCount(); i++) {
+                Doctor d = doctorCombo.getItemAt(i);
+                if (d.getDoctorId() == a.getDoctorId()) {
+                    doctorCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        };
+
+        patientCombo.addActionListener(e -> {
+            loadAppointmentsForPatient.run();
+            syncDoctorToAppointment.run();
+        });
+        appointmentCombo.addActionListener(e -> syncDoctorToAppointment.run());
+
         int row = 0;
-        addFormField(panel, gbc, row++, "Appointment ID:", appointmentIdField);
         addFormField(panel, gbc, row++, "Patient:", patientCombo);
+        JLabel apptHint = new JLabel("Appointment:");
+        apptHint.setToolTipText("Only shows appointments for the selected patient. Create one under Appointments if empty.");
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
+        panel.add(apptHint, gbc);
+        gbc.gridx = 1;
+        panel.add(appointmentCombo, gbc);
+        row++;
+
         addFormField(panel, gbc, row++, "Doctor:", doctorCombo);
         addFormField(panel, gbc, row++, "Symptoms:", new JScrollPane(symptomsArea));
         addFormField(panel, gbc, row++, "Diagnosis:", new JScrollPane(diagnosisArea));
@@ -175,6 +220,12 @@ public class DiagnosisPanel extends JPanel {
         JPanel buttonPanel = new JPanel();
         JButton saveButton = new JButton("Save");
         JButton cancelButton = new JButton("Cancel");
+
+        if (patientCombo.getItemCount() > 0) {
+            patientCombo.setSelectedIndex(0);
+            loadAppointmentsForPatient.run();
+            syncDoctorToAppointment.run();
+        }
 
         saveButton.addActionListener(e -> {
             try {
@@ -186,25 +237,12 @@ public class DiagnosisPanel extends JPanel {
                     return;
                 }
 
-                // Validate appointment ID
-                String appointmentIdText = appointmentIdField.getText().trim();
-                if (appointmentIdText.isEmpty()) {
-                    JOptionPane.showMessageDialog(dialog, "Please enter Appointment ID");
-                    return;
-                }
-
-                int appointmentId;
-                try {
-                    appointmentId = Integer.parseInt(appointmentIdText);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(dialog, "Invalid Appointment ID. Please enter a number.");
-                    return;
-                }
-
-                Appointment appt = AppointmentDAO.getAppointmentById(appointmentId);
+                Appointment appt = (Appointment) appointmentCombo.getSelectedItem();
                 if (appt == null) {
                     JOptionPane.showMessageDialog(dialog,
-                        "No appointment found with that ID. Schedule an appointment first, then use its ID here.");
+                        "No appointment for this patient. Open the Appointments tab and schedule one, then try again.",
+                        "No appointment",
+                        JOptionPane.WARNING_MESSAGE);
                     return;
                 }
                 if (appt.getPatientId() != selectedPatient.getPatientId()) {
@@ -214,9 +252,11 @@ public class DiagnosisPanel extends JPanel {
                 }
                 if (appt.getDoctorId() != selectedDoctor.getDoctorId()) {
                     JOptionPane.showMessageDialog(dialog,
-                        "The selected doctor does not match this appointment.");
+                        "The doctor must match the appointment. Change the appointment or pick the correct doctor.");
                     return;
                 }
+
+                int appointmentId = appt.getAppointmentId();
 
                 // Validate required fields
                 if (symptomsArea.getText().trim().isEmpty() || diagnosisArea.getText().trim().isEmpty()) {
@@ -248,7 +288,14 @@ public class DiagnosisPanel extends JPanel {
                     JOptionPane.showMessageDialog(dialog, "Diagnosis added successfully!");
                     dialog.dispose();
                 } else {
-                    JOptionPane.showMessageDialog(dialog, "Failed to add diagnosis. Check if Appointment ID exists.", "Error", JOptionPane.ERROR_MESSAGE);
+                    String detail = DiagnosisDAO.getLastAddDiagnosisError();
+                    String msg = "Could not save diagnosis.";
+                    if (detail != null && !detail.isEmpty()) {
+                        msg += "\n\nDatabase said:\n" + detail;
+                    } else {
+                        msg += "\n\nIf this persists, check the console for errors.";
+                    }
+                    JOptionPane.showMessageDialog(dialog, msg, "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 // Show both exception type and message
