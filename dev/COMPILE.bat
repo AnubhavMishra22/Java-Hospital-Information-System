@@ -4,7 +4,7 @@ REM Pass "nopause" as first argument to skip pause at end (used by START_CLIENT.
 set "NOPAUSE="
 if /i "%~1"=="nopause" set "NOPAUSE=1"
 
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 title Compiling Hospital Management System
 color 0E
 echo ================================

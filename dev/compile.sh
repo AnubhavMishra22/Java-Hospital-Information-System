@@ -24,7 +24,7 @@ if [ $? -eq 0 ]; then
     # Create JAR file
     echo "Creating JAR file..."
     cd build/classes
-    jar cvfm ../../dist/HospitalManagementSystem.jar ../../manifest.txt com/
+    jar cvfm ../../dist/HospitalManagementSystem.jar ../../dev/manifest.txt com/
     cd ../..
 
     echo "================================"

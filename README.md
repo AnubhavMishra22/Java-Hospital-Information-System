@@ -46,7 +46,7 @@ Hospital-Management-System/
 ├── dev/                         # Optional shell scripts, simple compile, test helpers
 ├── nbproject/                   # NetBeans configuration
 ├── build.xml                    # Ant build file
-├── COMPILE.bat / compile.ps1    # Primary Windows build (used by START_CLIENT.bat)
+├── dev/COMPILE.bat, compile.ps1, manifest.txt     # Primary Windows build (START_CLIENT.bat calls these)
 ├── RUN_HOSPITAL_SYSTEM.bat      # Start server + client (Windows)
 ├── dev/compile.sh               # Unix/Mac compile helper
 ├── dev/run-server.sh            # Unix/Mac server launcher
@@ -94,6 +94,12 @@ private static final String DB_PASSWORD = "your_password";
 ```bash
 ./dev/compile.sh
 ```
+
+#### Using Windows batch (from project root):
+```bat
+dev\COMPILE.bat
+```
+`START_CLIENT.bat` calls this automatically before launching the client.
 
 #### Using Ant:
 ```bash

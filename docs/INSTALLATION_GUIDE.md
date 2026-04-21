@@ -150,7 +150,7 @@ mkdir build\classes
 mkdir dist
 javac -d build/classes -cp "lib/*" src/com/hospital/*/*.java src/com/hospital/*/*/*.java
 cd build/classes
-jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\manifest.txt com\
+jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\dev\manifest.txt com\
 cd ..\..
 echo Build completed!
 ```
@@ -174,7 +174,7 @@ javac -d build/classes -cp "lib/*" @sources.txt
 
 # Create JAR
 cd build/classes
-jar cvfm ../../dist/HospitalManagementSystem.jar ../../manifest.txt com/
+jar cvfm ../../dist/HospitalManagementSystem.jar ../../dev/manifest.txt com/
 cd ../..
 ```
 

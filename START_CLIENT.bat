@@ -7,7 +7,7 @@ echo   HOSPITAL MANAGEMENT SYSTEM - CLIENT
 echo ============================================
 echo.
 echo Rebuilding JAR from current source...
-call COMPILE.bat nopause
+call dev\COMPILE.bat nopause
 if errorlevel 1 (
     echo.
     echo Build failed. Fix compile errors above, then run this script again.

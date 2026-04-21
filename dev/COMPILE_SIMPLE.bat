@@ -35,7 +35,7 @@ if %ERRORLEVEL% EQU 0 (
 
     echo Creating JAR file...
     cd build\classes
-    jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\manifest.txt com\ >nul 2>&1
+    jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\dev\manifest.txt com\ >nul 2>&1
     cd ..\..
 
     echo.
