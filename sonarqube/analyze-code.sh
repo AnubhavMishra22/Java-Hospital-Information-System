@@ -15,7 +15,7 @@ mkdir -p "$REPORT_DIR"
 # Compile if needed
 if [ ! -d "build/classes" ]; then
     echo "Compiling source code..."
-    ./compile.sh > /dev/null 2>&1
+    ./dev/compile.sh > /dev/null 2>&1
 fi
 
 # Run tests

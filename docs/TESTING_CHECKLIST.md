@@ -6,7 +6,7 @@
 
 #### 1. **Compilation Test**
 ```bash
-COMPILE_SIMPLE.bat
+dev\COMPILE_SIMPLE.bat
 ```
 - [ ] Compilation successful (no errors)
 - [ ] JAR file created in `dist/` folder

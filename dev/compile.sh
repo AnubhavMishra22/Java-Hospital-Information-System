@@ -1,5 +1,9 @@
 #!/bin/bash
-# Compile script for Hospital Management System
+# Compile script for Hospital Management System (lives in dev/; always builds from repo root)
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT"
 
 echo "================================"
 echo "Hospital Management System"
@@ -20,7 +24,7 @@ if [ $? -eq 0 ]; then
     # Create JAR file
     echo "Creating JAR file..."
     cd build/classes
-    jar cvfm ../../dist/HospitalManagementSystem.jar ../../manifest.mf com/
+    jar cvfm ../../dist/HospitalManagementSystem.jar ../../manifest.txt com/
     cd ../..
 
     echo "================================"

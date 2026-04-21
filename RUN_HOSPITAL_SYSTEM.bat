@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title Hospital Management System
 color 0E
 echo ============================================

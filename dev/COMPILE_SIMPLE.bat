@@ -1,4 +1,6 @@
 @echo off
+REM Script lives in dev\; build output paths are relative to project root
+cd /d "%~dp0\.."
 title Compiling Hospital Management System
 color 0E
 echo ================================
@@ -42,7 +44,7 @@ if %ERRORLEVEL% EQU 0 (
     echo JAR file: dist\HospitalManagementSystem.jar
     echo ================================
     echo.
-    echo You can now run RUN_HOSPITAL_SYSTEM.bat
+    echo You can now run RUN_HOSPITAL_SYSTEM.bat in the project root
     echo.
 ) else (
     echo.

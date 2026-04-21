@@ -1,5 +1,9 @@
 #!/bin/bash
-# Run all unit tests for Hospital Management System
+# Run all unit tests for Hospital Management System (script in dev/; runs from repo root)
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT"
 
 echo "========================================"
 echo "Hospital Management System - Unit Tests"
