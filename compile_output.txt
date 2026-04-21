@@ -1,4 +1,0 @@
-Microsoft Windows [Version 10.0.26100.7623]
-(c) Microsoft Corporation. All rights reserved.
-
-C:\Users\anubh\OneDrive - University of California, Davis\Desktop\Projects\Java HIS\Java-Hospital-Information-System>
