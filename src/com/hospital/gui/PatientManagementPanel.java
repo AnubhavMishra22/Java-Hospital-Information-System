@@ -244,7 +244,7 @@ public class PatientManagementPanel extends JPanel {
             return;
         }
 
-        int patientId = (int) tableModel.getValueAt(selectedRow, 0);
+        int patientId = ((Number) tableModel.getValueAt(selectedRow, 0)).intValue();
         Patient patient = PatientDAO.getPatientById(patientId);
 
         if (patient != null) {
@@ -268,7 +268,7 @@ public class PatientManagementPanel extends JPanel {
             return;
         }
 
-        int patientId = (int) tableModel.getValueAt(selectedRow, 0);
+        int patientId = ((Number) tableModel.getValueAt(selectedRow, 0)).intValue();
         Patient patient = PatientDAO.getPatientById(patientId);
 
         if (patient == null) {
@@ -280,7 +280,8 @@ public class PatientManagementPanel extends JPanel {
     }
 
     private void showEditPatientDialog(Patient patient) {
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Edit Patient", true);
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(owner, "Edit Patient", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(500, 650);
         dialog.setLocationRelativeTo(this);
 

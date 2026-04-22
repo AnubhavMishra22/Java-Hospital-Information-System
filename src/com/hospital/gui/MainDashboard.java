@@ -4,8 +4,12 @@ import com.hospital.client.SocketClient;
 import com.hospital.database.MessageDAO;
 import com.hospital.model.User;
 
+import com.hospital.database.AppointmentDAO;
+import com.hospital.database.PatientDAO;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.ExecutionException;
 import java.awt.event.*;
 import java.awt.geom.*;
 
@@ -203,16 +207,40 @@ public class MainDashboard extends JFrame {
         JPanel centerPanel = new JPanel(new GridLayout(2, 2, 20, 20));
         centerPanel.setOpaque(false);
 
-        // Get statistics
-        int totalPatients = com.hospital.database.PatientDAO.getAllPatients().size();
-        int totalAppointments = com.hospital.database.AppointmentDAO.getUpcomingAppointments().size();
-        int unreadMessages = com.hospital.database.MessageDAO.getUnreadCount(currentUser.getUserId());
+        JLabel patientsValue = new JLabel("…");
+        JLabel appointmentsValue = new JLabel("…");
+        JLabel unreadValue = new JLabel("…");
 
-        // Create dashboard cards
-        centerPanel.add(createDashboardCard("Total Patients", String.valueOf(totalPatients), new Color(46, 204, 113)));
-        centerPanel.add(createDashboardCard("Upcoming Appointments", String.valueOf(totalAppointments), new Color(52, 152, 219)));
-        centerPanel.add(createDashboardCard("Unread Messages", String.valueOf(unreadMessages), new Color(241, 196, 15)));
-        centerPanel.add(createDashboardCard("Your Role", currentUser.getRole().toString(), new Color(155, 89, 182)));
+        centerPanel.add(createDashboardCard("Total Patients", patientsValue, new Color(46, 204, 113)));
+        centerPanel.add(createDashboardCard("Upcoming Appointments", appointmentsValue, new Color(52, 152, 219)));
+        centerPanel.add(createDashboardCard("Unread Messages", unreadValue, new Color(241, 196, 15)));
+        centerPanel.add(createDashboardCard("Your Role", new JLabel(currentUser.getRole().toString()), new Color(155, 89, 182)));
+
+        SwingWorker<int[], Void> statsWorker = new SwingWorker<int[], Void>() {
+            @Override
+            protected int[] doInBackground() {
+                int p = PatientDAO.countActivePatients();
+                int a = AppointmentDAO.countUpcomingScheduledAppointments();
+                int m = MessageDAO.getUnreadCount(currentUser.getUserId());
+                return new int[] { p, a, m };
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    int[] counts = get();
+                    patientsValue.setText(String.valueOf(counts[0]));
+                    appointmentsValue.setText(String.valueOf(counts[1]));
+                    unreadValue.setText(String.valueOf(counts[2]));
+                } catch (InterruptedException | ExecutionException ex) {
+                    patientsValue.setText("—");
+                    appointmentsValue.setText("—");
+                    unreadValue.setText("—");
+                    ex.printStackTrace();
+                }
+            }
+        };
+        statsWorker.execute();
 
         // Bottom message
         JPanel bottomPanel = new JPanel();
@@ -233,7 +261,7 @@ public class MainDashboard extends JFrame {
         contentPanel.repaint();
     }
 
-    private JPanel createDashboardCard(String title, String value, Color bgColor) {
+    private JPanel createDashboardCard(String title, JLabel valueLabel, Color bgColor) {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(bgColor);
@@ -247,7 +275,6 @@ public class MainDashboard extends JFrame {
         titleLabel.setForeground(Color.WHITE);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(new Font("Arial", Font.BOLD, 48));
         valueLabel.setForeground(Color.WHITE);
         valueLabel.setAlignmentX(Component.CENTER_ALIGNMENT);

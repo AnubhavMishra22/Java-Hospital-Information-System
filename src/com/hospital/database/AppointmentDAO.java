@@ -103,6 +103,7 @@ public class AppointmentDAO {
                 return extractAppointmentFromResultSet(rs);
             }
         } catch (SQLException e) {
+            System.err.println("AppointmentDAO.getAppointmentById: " + e.getMessage());
             e.printStackTrace();
         } finally {
             DatabaseConnection.closeResultSet(rs);
@@ -256,6 +257,35 @@ public class AppointmentDAO {
             }
         }
         return appointments;
+    }
+
+    /**
+     * Count upcoming scheduled appointments (same filter as {@link #getUpcomingAppointments()}).
+     */
+    public static int countUpcomingScheduledAppointments() {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return 0;
+            }
+            String query = "SELECT COUNT(*) FROM appointments a " +
+                          "WHERE a.appointment_date >= CURDATE() AND a.status = 'SCHEDULED'";
+            pst = conn.prepareStatement(query);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("AppointmentDAO.countUpcomingScheduledAppointments: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return 0;
     }
 
     /**

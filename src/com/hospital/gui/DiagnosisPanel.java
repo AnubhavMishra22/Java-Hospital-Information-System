@@ -15,6 +15,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Diagnosis Management Panel
@@ -101,33 +102,65 @@ public class DiagnosisPanel extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // Show recent diagnoses by default so panel is never blank on open.
-        loadRecentDiagnoses();
+        // Show recent diagnoses by default so panel is never blank on open (DB work off EDT).
+        loadRecentDiagnosesAsync();
     }
 
     private void searchDiagnoses() {
         String patientIdStr = searchField.getText().trim();
         if (patientIdStr.isEmpty()) {
-            loadRecentDiagnoses();
+            loadRecentDiagnosesAsync();
             return;
         }
 
         try {
-            int patientId = Integer.parseInt(patientIdStr);
-            List<Diagnosis> diagnoses = DiagnosisDAO.getDiagnosesByPatient(patientId);
-            populateDiagnosisTable(diagnoses);
+            final int patientId = Integer.parseInt(patientIdStr);
+            SwingWorker<List<Diagnosis>, Void> worker = new SwingWorker<List<Diagnosis>, Void>() {
+                @Override
+                protected List<Diagnosis> doInBackground() {
+                    return DiagnosisDAO.getDiagnosesByPatient(patientId);
+                }
 
-            if (diagnoses.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No diagnoses found for this patient");
-            }
+                @Override
+                protected void done() {
+                    try {
+                        List<Diagnosis> diagnoses = get();
+                        populateDiagnosisTable(diagnoses);
+                        if (diagnoses.isEmpty()) {
+                            JOptionPane.showMessageDialog(DiagnosisPanel.this, "No diagnoses found for this patient");
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        JOptionPane.showMessageDialog(DiagnosisPanel.this,
+                            "Search failed: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    }
+                }
+            };
+            worker.execute();
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Invalid patient ID", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void loadRecentDiagnoses() {
-        List<Diagnosis> diagnoses = DiagnosisDAO.getAllDiagnoses();
-        populateDiagnosisTable(diagnoses);
+    private void loadRecentDiagnosesAsync() {
+        SwingWorker<List<Diagnosis>, Void> worker = new SwingWorker<List<Diagnosis>, Void>() {
+            @Override
+            protected List<Diagnosis> doInBackground() {
+                return DiagnosisDAO.getAllDiagnoses();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    populateDiagnosisTable(get());
+                } catch (InterruptedException | ExecutionException ex) {
+                    JOptionPane.showMessageDialog(DiagnosisPanel.this,
+                        "Could not load diagnoses: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
     }
 
     private void populateDiagnosisTable(List<Diagnosis> diagnoses) {
@@ -153,18 +186,47 @@ public class DiagnosisPanel extends JPanel {
             return;
         }
         JDialog dialog = new JDialog(owner, "Add Diagnosis", Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(600, 550);
+        dialog.setLayout(new BorderLayout());
+        JLabel loading = new JLabel("Loading patients and doctors…", SwingConstants.CENTER);
+        loading.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        dialog.add(loading, BorderLayout.CENTER);
+        dialog.pack();
         dialog.setLocationRelativeTo(this);
 
+        SwingWorker<Object[], Void> loader = new SwingWorker<Object[], Void>() {
+            @Override
+            protected Object[] doInBackground() {
+                return new Object[] { PatientDAO.getAllPatients(), DoctorDAO.getAllDoctors() };
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Object[] data = get();
+                    @SuppressWarnings("unchecked")
+                    List<Patient> patients = (List<Patient>) data[0];
+                    @SuppressWarnings("unchecked")
+                    List<Doctor> doctors = (List<Doctor>) data[1];
+                    installAddDiagnosisForm(dialog, patients, doctors);
+                } catch (InterruptedException | ExecutionException ex) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Could not load form data: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                    dialog.dispose();
+                }
+            }
+        };
+        loader.execute();
+        dialog.setVisible(true);
+    }
+
+    private void installAddDiagnosisForm(JDialog dialog, List<Patient> patients, List<Doctor> doctors) {
+        dialog.getContentPane().removeAll();
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Get patients and doctors
-        List<Patient> patients = PatientDAO.getAllPatients();
-        List<Doctor> doctors = DoctorDAO.getAllDoctors();
 
         JComboBox<Patient> patientCombo = new JComboBox<>(patients.toArray(new Patient[0]));
         JComboBox<Appointment> appointmentCombo = new JComboBox<>();
@@ -173,22 +235,7 @@ public class DiagnosisPanel extends JPanel {
         JTextArea symptomsArea = new JTextArea(4, 20);
         JTextArea diagnosisArea = new JTextArea(4, 20);
         JTextArea notesArea = new JTextArea(3, 20);
-        JTextField followUpDateField = new JTextField(15); // Format: YYYY-MM-DD
-
-        Runnable loadAppointmentsForPatient = () -> {
-            appointmentCombo.removeAllItems();
-            Patient p = (Patient) patientCombo.getSelectedItem();
-            if (p == null) {
-                return;
-            }
-            List<Appointment> apps = AppointmentDAO.getAppointmentsByPatient(p.getPatientId());
-            for (Appointment a : apps) {
-                appointmentCombo.addItem(a);
-            }
-            if (!apps.isEmpty()) {
-                appointmentCombo.setSelectedIndex(0);
-            }
-        };
+        JTextField followUpDateField = new JTextField(15);
 
         Runnable syncDoctorToAppointment = () -> {
             Appointment a = (Appointment) appointmentCombo.getSelectedItem();
@@ -204,10 +251,42 @@ public class DiagnosisPanel extends JPanel {
             }
         };
 
-        patientCombo.addActionListener(e -> {
-            loadAppointmentsForPatient.run();
-            syncDoctorToAppointment.run();
-        });
+        Runnable loadAppointmentsForPatient = () -> {
+            Patient p = (Patient) patientCombo.getSelectedItem();
+            appointmentCombo.removeAllItems();
+            if (p == null) {
+                return;
+            }
+            appointmentCombo.setEnabled(false);
+            SwingWorker<List<Appointment>, Void> w = new SwingWorker<List<Appointment>, Void>() {
+                @Override
+                protected List<Appointment> doInBackground() {
+                    return AppointmentDAO.getAppointmentsByPatient(p.getPatientId());
+                }
+
+                @Override
+                protected void done() {
+                    appointmentCombo.setEnabled(true);
+                    try {
+                        List<Appointment> apps = get();
+                        for (Appointment a : apps) {
+                            appointmentCombo.addItem(a);
+                        }
+                        if (!apps.isEmpty()) {
+                            appointmentCombo.setSelectedIndex(0);
+                        }
+                        syncDoctorToAppointment.run();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        JOptionPane.showMessageDialog(dialog,
+                            "Could not load appointments: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    }
+                }
+            };
+            w.execute();
+        };
+
+        patientCombo.addActionListener(e -> loadAppointmentsForPatient.run());
         appointmentCombo.addActionListener(e -> syncDoctorToAppointment.run());
 
         int row = 0;
@@ -235,7 +314,6 @@ public class DiagnosisPanel extends JPanel {
         if (patientCombo.getItemCount() > 0) {
             patientCombo.setSelectedIndex(0);
             loadAppointmentsForPatient.run();
-            syncDoctorToAppointment.run();
         }
 
         saveButton.addActionListener(e -> {
@@ -269,13 +347,12 @@ public class DiagnosisPanel extends JPanel {
 
                 int appointmentId = appt.getAppointmentId();
 
-                // Validate required fields
                 if (symptomsArea.getText().trim().isEmpty() || diagnosisArea.getText().trim().isEmpty()) {
                     JOptionPane.showMessageDialog(dialog, "Symptoms and Diagnosis fields are required");
                     return;
                 }
 
-                Diagnosis diagnosis = new Diagnosis(
+                final Diagnosis diagnosis = new Diagnosis(
                     appointmentId,
                     selectedPatient.getPatientId(),
                     selectedDoctor.getDoctorId(),
@@ -294,31 +371,48 @@ public class DiagnosisPanel extends JPanel {
                     }
                 }
 
-                int diagnosisId = DiagnosisDAO.addDiagnosis(diagnosis);
-                if (diagnosisId > 0) {
-                    JOptionPane.showMessageDialog(dialog, "Diagnosis added successfully!");
-                    // Immediately refresh table for this patient so the new entry is visible.
-                    searchField.setText(String.valueOf(selectedPatient.getPatientId()));
-                    searchDiagnoses();
-                    dialog.dispose();
-                } else {
-                    String detail = DiagnosisDAO.getLastAddDiagnosisError();
-                    String msg = "Could not save this diagnosis.\n\n";
-                    if (detail != null && !detail.isEmpty()) {
-                        msg += "Reason:\n" + detail;
-                    } else {
-                        msg += "No database reason was captured. Check the terminal/console for SQL errors.";
+                final Patient patientForRefresh = selectedPatient;
+                saveButton.setEnabled(false);
+                SwingWorker<Integer, Void> saveWorker = new SwingWorker<Integer, Void>() {
+                    @Override
+                    protected Integer doInBackground() {
+                        return DiagnosisDAO.addDiagnosis(diagnosis);
                     }
-                    msg += "\n\n— If this dialog still mentions typing an \"Appointment ID\", you are running an old build: "
-                        + "use Clean and Build in NetBeans, or delete the dist/ and build/ folders and run again.";
-                    JOptionPane.showMessageDialog(dialog, msg, "Diagnosis save failed", JOptionPane.ERROR_MESSAGE);
-                }
+
+                    @Override
+                    protected void done() {
+                        saveButton.setEnabled(true);
+                        try {
+                            int diagnosisId = get();
+                            if (diagnosisId > 0) {
+                                JOptionPane.showMessageDialog(dialog, "Diagnosis added successfully!");
+                                searchField.setText(String.valueOf(patientForRefresh.getPatientId()));
+                                searchDiagnoses();
+                                dialog.dispose();
+                            } else {
+                                String detail = DiagnosisDAO.getLastAddDiagnosisError();
+                                String msg = "Could not save this diagnosis.\n\n";
+                                if (detail != null && !detail.isEmpty()) {
+                                    msg += "Reason:\n" + detail;
+                                } else {
+                                    msg += "No database reason was captured. Check the terminal/console for SQL errors.";
+                                }
+                                msg += "\n\n— If this dialog still mentions typing an \"Appointment ID\", you are running an old build: "
+                                    + "use Clean and Build in NetBeans, or delete the dist/ and build/ folders and run again.";
+                                JOptionPane.showMessageDialog(dialog, msg, "Diagnosis save failed", JOptionPane.ERROR_MESSAGE);
+                            }
+                        } catch (InterruptedException | ExecutionException ex) {
+                            JOptionPane.showMessageDialog(dialog, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            ex.printStackTrace();
+                        }
+                    }
+                };
+                saveWorker.execute();
             } catch (Exception ex) {
-                // Show both exception type and message
                 String errorMsg = ex.getClass().getSimpleName() + ": " +
-                                 (ex.getMessage() != null ? ex.getMessage() : "Unknown error");
+                    (ex.getMessage() != null ? ex.getMessage() : "Unknown error");
                 JOptionPane.showMessageDialog(dialog, errorMsg, "Error", JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace(); // Print to console for debugging
+                ex.printStackTrace();
             }
         });
 
@@ -333,7 +427,9 @@ public class DiagnosisPanel extends JPanel {
         panel.add(buttonPanel, gbc);
 
         dialog.add(new JScrollPane(panel));
-        dialog.setVisible(true);
+        dialog.setSize(600, 550);
+        dialog.revalidate();
+        dialog.repaint();
     }
 
     private void viewDiagnosisDetails() {
@@ -348,18 +444,42 @@ public class DiagnosisPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Invalid row selection.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        int diagnosisId = ((Number) idVal).intValue();
-        Diagnosis diagnosis = DiagnosisDAO.getDiagnosisById(diagnosisId);
-
-        if (diagnosis == null) {
-            JOptionPane.showMessageDialog(this,
-                "Could not load diagnosis details. If this persists, check the database connection.",
-                "Not found",
-                JOptionPane.WARNING_MESSAGE);
+        final int diagnosisId = ((Number) idVal).intValue();
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        if (owner == null) {
+            JOptionPane.showMessageDialog(this, "Cannot open details.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        Window owner = SwingUtilities.getWindowAncestor(this);
+        SwingWorker<Diagnosis, Void> worker = new SwingWorker<Diagnosis, Void>() {
+            @Override
+            protected Diagnosis doInBackground() {
+                return DiagnosisDAO.getDiagnosisById(diagnosisId);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    Diagnosis diagnosis = get();
+                    if (diagnosis == null) {
+                        JOptionPane.showMessageDialog(DiagnosisPanel.this,
+                            "Could not load diagnosis details. If this persists, check the database connection.",
+                            "Not found",
+                            JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                    showDiagnosisDetailsDialog(owner, diagnosis);
+                } catch (InterruptedException | ExecutionException ex) {
+                    JOptionPane.showMessageDialog(DiagnosisPanel.this,
+                        "Could not load details: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void showDiagnosisDetailsDialog(Window owner, Diagnosis diagnosis) {
         JDialog dialog = new JDialog(owner, "Diagnosis Details", Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
@@ -382,9 +502,9 @@ public class DiagnosisPanel extends JPanel {
 
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dialog.dispose());
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(closeButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        JPanel bp = new JPanel();
+        bp.add(closeButton);
+        panel.add(bp, BorderLayout.SOUTH);
 
         dialog.add(panel);
         dialog.setVisible(true);

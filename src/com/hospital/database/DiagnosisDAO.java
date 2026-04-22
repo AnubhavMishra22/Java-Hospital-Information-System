@@ -10,10 +10,20 @@ import java.util.List;
  */
 public class DiagnosisDAO {
 
-    private static volatile String lastAddDiagnosisError = null;
+    /** Per-calling-thread last error from {@link #addDiagnosis(Diagnosis)} (avoids cross-thread leakage on shared DB access). */
+    private static final ThreadLocal<String> lastAddDiagnosisError = new ThreadLocal<>();
 
     public static String getLastAddDiagnosisError() {
-        return lastAddDiagnosisError;
+        String s = lastAddDiagnosisError.get();
+        return s != null ? s : null;
+    }
+
+    private static void setLastAddDiagnosisError(String message) {
+        if (message == null || message.isEmpty()) {
+            lastAddDiagnosisError.remove();
+        } else {
+            lastAddDiagnosisError.set(message);
+        }
     }
 
     /**
@@ -24,12 +34,12 @@ public class DiagnosisDAO {
         PreparedStatement pst = null;
         ResultSet rs = null;
         int diagnosisId = -1;
-        lastAddDiagnosisError = null;
+        lastAddDiagnosisError.remove();
 
         try {
             conn = DatabaseConnection.getConnection();
             if (conn == null) {
-                lastAddDiagnosisError = "Database connection is null.";
+                setLastAddDiagnosisError("Database connection is null.");
                 return -1;
             }
             String query = "INSERT INTO diagnoses (appointment_id, patient_id, doctor_id, " +
@@ -54,7 +64,7 @@ public class DiagnosisDAO {
 
             int result = pst.executeUpdate();
             if (result == 0) {
-                lastAddDiagnosisError = "INSERT affected 0 rows (nothing was written). Check foreign keys and DB permissions.";
+                setLastAddDiagnosisError("INSERT affected 0 rows (nothing was written). Check foreign keys and DB permissions.");
             } else {
                 rs = pst.getGeneratedKeys();
                 if (rs != null && rs.next()) {
@@ -63,19 +73,13 @@ public class DiagnosisDAO {
                 DatabaseConnection.closeResultSet(rs);
                 rs = null;
                 if (diagnosisId <= 0) {
-                    try (Statement st = conn.createStatement();
-                         ResultSet rsId = st.executeQuery("SELECT LAST_INSERT_ID()")) {
-                        if (rsId.next()) {
-                            diagnosisId = rsId.getInt(1);
-                        }
-                    }
-                }
-                if (diagnosisId <= 0) {
-                    lastAddDiagnosisError = "Insert appeared to run but no new diagnosis_id was returned. Try reconnecting to MySQL.";
+                    setLastAddDiagnosisError(
+                        "Insert ran but generated keys were not returned. Avoid LAST_INSERT_ID() on a shared connection; "
+                            + "enable RETURN_GENERATED_KEYS for the insert or check the JDBC driver / MySQL configuration.");
                 }
             }
         } catch (SQLException e) {
-            lastAddDiagnosisError = e.getMessage();
+            setLastAddDiagnosisError(e.getMessage());
             System.err.println("DiagnosisDAO.addDiagnosis: " + e.getMessage());
             e.printStackTrace();
         } finally {
@@ -130,43 +134,28 @@ public class DiagnosisDAO {
      * Get all diagnoses ordered by most recent first.
      */
     public static List<Diagnosis> getAllDiagnoses() {
-        Connection conn = null;
-        Statement stmt = null;
-        ResultSet rs = null;
         List<Diagnosis> diagnoses = new ArrayList<>();
-
-        try {
-            conn = DatabaseConnection.getConnection();
-            if (conn == null) {
-                return diagnoses;
-            }
-            String query = "SELECT d.diagnosis_id, d.appointment_id, d.patient_id, d.doctor_id, " +
-                          "d.diagnosis_date, d.symptoms, d.diagnosis, d.notes, d.follow_up_date, " +
-                          "CONCAT(p.first_name, ' ', p.last_name) AS patient_name, " +
-                          "u.full_name AS doctor_name " +
-                          "FROM diagnoses d " +
-                          "INNER JOIN patients p ON d.patient_id = p.patient_id " +
-                          "LEFT JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
-                          "LEFT JOIN users u ON doc.user_id = u.user_id " +
-                          "ORDER BY d.diagnosis_date DESC";
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(query);
-
+        Connection conn = DatabaseConnection.getConnection();
+        if (conn == null) {
+            return diagnoses;
+        }
+        String query = "SELECT d.diagnosis_id, d.appointment_id, d.patient_id, d.doctor_id, " +
+                      "d.diagnosis_date, d.symptoms, d.diagnosis, d.notes, d.follow_up_date, " +
+                      "CONCAT(p.first_name, ' ', p.last_name) AS patient_name, " +
+                      "u.full_name AS doctor_name " +
+                      "FROM diagnoses d " +
+                      "INNER JOIN patients p ON d.patient_id = p.patient_id " +
+                      "LEFT JOIN doctors doc ON d.doctor_id = doc.doctor_id " +
+                      "LEFT JOIN users u ON doc.user_id = u.user_id " +
+                      "ORDER BY d.diagnosis_date DESC";
+        try (PreparedStatement pst = conn.prepareStatement(query);
+             ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 diagnoses.add(extractDiagnosisFromResultSet(rs));
             }
         } catch (SQLException e) {
             System.err.println("DiagnosisDAO.getAllDiagnoses: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            DatabaseConnection.closeResultSet(rs);
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
         return diagnoses;
     }
