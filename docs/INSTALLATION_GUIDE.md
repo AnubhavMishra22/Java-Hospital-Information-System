@@ -139,8 +139,8 @@ private static final String DB_PASSWORD = "YOUR_MYSQL_PASSWORD"; // Change this!
 
 #### Option A: Using Shell Script (Linux/Mac)
 ```bash
-chmod +x compile.sh
-./compile.sh
+chmod +x dev/compile.sh dev/run-server.sh dev/run-client.sh dev/run-tests.sh
+./dev/compile.sh
 ```
 
 #### Option B: Using Windows Batch (Create compile.bat)
@@ -150,7 +150,7 @@ mkdir build\classes
 mkdir dist
 javac -d build/classes -cp "lib/*" src/com/hospital/*/*.java src/com/hospital/*/*/*.java
 cd build/classes
-jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\manifest.mf com\
+jar cvfm ..\..\dist\HospitalManagementSystem.jar ..\..\dev\manifest.txt com\
 cd ..\..
 echo Build completed!
 ```
@@ -174,7 +174,7 @@ javac -d build/classes -cp "lib/*" @sources.txt
 
 # Create JAR
 cd build/classes
-jar cvfm ../../dist/HospitalManagementSystem.jar ../../manifest.mf com/
+jar cvfm ../../dist/HospitalManagementSystem.jar ../../dev/manifest.txt com/
 cd ../..
 ```
 
@@ -183,7 +183,7 @@ cd ../..
 #### 7.1 Start the Server (Terminal 1)
 ```bash
 # Linux/Mac
-./run-server.sh
+./dev/run-server.sh
 
 # Windows
 java -cp "dist/HospitalManagementSystem.jar;lib/*" com.hospital.server.HospitalServer
@@ -205,7 +205,7 @@ Waiting for client connections...
 #### 7.2 Start the Client (Terminal 2)
 ```bash
 # Linux/Mac
-./run-client.sh
+./dev/run-client.sh
 
 # Windows
 java -cp "dist/HospitalManagementSystem.jar;lib/*" com.hospital.gui.LoginFrame

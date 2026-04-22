@@ -46,7 +46,7 @@ fi
 # Compile source code if not already compiled
 if [ ! -d "build/classes" ]; then
     echo -e "${YELLOW}Compiling source code...${NC}"
-    ./compile.sh
+    ./dev/compile.sh
     if [ $? -ne 0 ]; then
         echo -e "${RED}✗ Compilation failed${NC}"
         exit 1

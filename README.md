@@ -42,11 +42,15 @@ Hospital-Management-System/
 ├── resources/
 │   └── sql/                     # Database schema and scripts
 ├── lib/                         # External libraries
+├── docs/                        # Guides, checklists, and project notes
+├── dev/                         # Optional shell scripts, simple compile, test helpers
 ├── nbproject/                   # NetBeans configuration
 ├── build.xml                    # Ant build file
-├── compile.sh                   # Compilation script
-├── run-client.sh               # Client launcher
-└── run-server.sh               # Server launcher
+├── dev/COMPILE.bat, compile.ps1, manifest.txt     # Primary Windows build (START_CLIENT.bat calls these)
+├── RUN_HOSPITAL_SYSTEM.bat      # Start server + client (Windows)
+├── dev/compile.sh               # Unix/Mac compile helper
+├── dev/run-server.sh            # Unix/Mac server launcher
+└── dev/run-client.sh            # Unix/Mac client launcher
 ```
 
 ## Database Schema
@@ -88,8 +92,14 @@ private static final String DB_PASSWORD = "your_password";
 
 #### Using Shell Script (Linux/Mac):
 ```bash
-./compile.sh
+./dev/compile.sh
 ```
+
+#### Using Windows batch (from project root):
+```bat
+dev\COMPILE.bat
+```
+`START_CLIENT.bat` calls this automatically before launching the client.
 
 #### Using Ant:
 ```bash
@@ -109,12 +119,12 @@ javac -d build/classes -cp "lib/*" $(find src -name "*.java")
 
 1. **Start the Server** (for messaging and file transfer):
 ```bash
-./run-server.sh
+./dev/run-server.sh
 ```
 
 2. **Start the Client** (in a new terminal):
 ```bash
-./run-client.sh
+./dev/run-client.sh
 ```
 
 ### Method 2: Using Java Commands

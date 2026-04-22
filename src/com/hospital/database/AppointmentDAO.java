@@ -75,6 +75,45 @@ public class AppointmentDAO {
     }
 
     /**
+     * Get a single appointment by ID (with patient and doctor display names).
+     */
+    public static Appointment getAppointmentById(int appointmentId) {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return null;
+            }
+            String query = "SELECT a.appointment_id, a.patient_id, a.doctor_id, a.appointment_date, " +
+                          "a.appointment_time, a.status, a.reason, a.notes, a.created_by, a.created_at, " +
+                          "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
+                          "u.full_name as doctor_name " +
+                          "FROM appointments a " +
+                          "INNER JOIN patients p ON a.patient_id = p.patient_id " +
+                          "INNER JOIN doctors d ON a.doctor_id = d.doctor_id " +
+                          "INNER JOIN users u ON d.user_id = u.user_id " +
+                          "WHERE a.appointment_id = ?";
+            pst = conn.prepareStatement(query);
+            pst.setInt(1, appointmentId);
+
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return extractAppointmentFromResultSet(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("AppointmentDAO.getAppointmentById: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return null;
+    }
+
+    /**
      * Get appointments by date
      */
     public static List<Appointment> getAppointmentsByDate(Date date) {
@@ -219,6 +258,35 @@ public class AppointmentDAO {
             }
         }
         return appointments;
+    }
+
+    /**
+     * Count upcoming scheduled appointments (same filter as {@link #getUpcomingAppointments()}).
+     */
+    public static int countUpcomingScheduledAppointments() {
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                return 0;
+            }
+            String query = "SELECT COUNT(*) FROM appointments a " +
+                          "WHERE a.appointment_date >= CURDATE() AND a.status = 'SCHEDULED'";
+            pst = conn.prepareStatement(query);
+            rs = pst.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("AppointmentDAO.countUpcomingScheduledAppointments: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            DatabaseConnection.closeResultSet(rs);
+            DatabaseConnection.closePreparedStatement(pst);
+        }
+        return 0;
     }
 
     /**

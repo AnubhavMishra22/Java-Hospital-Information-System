@@ -26,16 +26,16 @@ private static final String DB_PASSWORD = "YOUR_PASSWORD_HERE";
 ### Step 3: Compile (1 minute)
 ```bash
 chmod +x *.sh
-./compile.sh
+./dev/compile.sh
 ```
 
 ### Step 4: Run (1 minute)
 ```bash
 # Terminal 1 - Start Server
-./run-server.sh
+./dev/run-server.sh
 
 # Terminal 2 - Start Client
-./run-client.sh
+./dev/run-client.sh
 ```
 
 ### Step 5: Login
@@ -85,19 +85,19 @@ Password: admin123
 
 ### Compile Only
 ```bash
-./compile.sh
+./dev/compile.sh
 ```
 
 ### Run Server Only
 ```bash
-./run-server.sh
+./dev/run-server.sh
 # or
 java -cp "dist/HospitalManagementSystem.jar:lib/*" com.hospital.server.HospitalServer
 ```
 
 ### Run Client Only
 ```bash
-./run-client.sh
+./dev/run-client.sh
 # or
 java -cp "dist/HospitalManagementSystem.jar:lib/*" com.hospital.gui.LoginFrame
 ```
@@ -105,7 +105,7 @@ java -cp "dist/HospitalManagementSystem.jar:lib/*" com.hospital.gui.LoginFrame
 ### Clean Build
 ```bash
 rm -rf build/ dist/
-./compile.sh
+./dev/compile.sh
 ```
 
 ## Troubleshooting Quick Fixes
@@ -166,9 +166,9 @@ Java-Hospital-Information-System/
 │   └── server/      → Socket server
 ├── resources/sql/   → Database schema
 ├── lib/            → MySQL connector
-├── compile.sh      → Build script
-├── run-server.sh   → Server launcher
-└── run-client.sh   → Client launcher
+├── dev/compile.sh      → Build script (Unix/Mac)
+├── dev/run-server.sh   → Server launcher
+└── dev/run-client.sh   → Client launcher
 ```
 
 ## Key Features Access

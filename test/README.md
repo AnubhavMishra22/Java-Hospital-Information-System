@@ -38,7 +38,7 @@ This directory contains comprehensive unit tests for the Hospital Management Sys
 
 ### Method 1: Using Shell Script (Recommended)
 ```bash
-./run-tests.sh
+./dev/run-tests.sh
 ```
 
 ### Method 2: Manual Compilation and Execution
@@ -139,7 +139,7 @@ To add new test classes:
 1. Create test class in appropriate package under `test/`
 2. Extend the test with `@Test` annotations
 3. Add the test class to `AllTests.java` suite
-4. Run `./run-tests.sh` to execute
+4. Run `./dev/run-tests.sh` to execute
 
 Example:
 ```java
@@ -173,7 +173,7 @@ These tests can be integrated into CI/CD pipelines:
 Example GitHub Actions workflow:
 ```yaml
 - name: Run Unit Tests
-  run: ./run-tests.sh
+  run: ./dev/run-tests.sh
 ```
 
 ## Notes
@@ -187,12 +187,12 @@ Example GitHub Actions workflow:
 ## Troubleshooting
 
 ### "JUnit not found"
-Download JUnit libraries to lib/ directory or run `./run-tests.sh` which auto-downloads them.
+Download JUnit libraries to lib/ directory or run `./dev/run-tests.sh` which auto-downloads them.
 
 ### "Compilation failed"
 Ensure source code compiles first:
 ```bash
-./compile.sh
+./dev/compile.sh
 ```
 
 ### "Class not found"

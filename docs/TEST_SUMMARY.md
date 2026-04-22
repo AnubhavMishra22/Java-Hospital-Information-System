@@ -45,7 +45,7 @@
 
 ```bash
 # Quick run
-./run-tests.sh
+./dev/run-tests.sh
 
 # Manual run
 java -cp "build/test-classes:build/classes:lib/*" com.hospital.TestRunner
@@ -55,7 +55,7 @@ java -cp "build/test-classes:build/classes:lib/*" com.hospital.TestRunner
 
 - JUnit 4.13.2
 - Hamcrest Core 1.3
-- All libraries auto-downloaded by run-tests.sh
+- All libraries auto-downloaded by `dev/run-tests.sh`
 
 ## Test Results
 
