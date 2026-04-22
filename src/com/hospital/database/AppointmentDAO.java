@@ -87,7 +87,8 @@ public class AppointmentDAO {
             if (conn == null) {
                 return null;
             }
-            String query = "SELECT a.*, " +
+            String query = "SELECT a.appointment_id, a.patient_id, a.doctor_id, a.appointment_date, " +
+                          "a.appointment_time, a.status, a.reason, a.notes, a.created_by, a.created_at, " +
                           "CONCAT(p.first_name, ' ', p.last_name) as patient_name, " +
                           "u.full_name as doctor_name " +
                           "FROM appointments a " +

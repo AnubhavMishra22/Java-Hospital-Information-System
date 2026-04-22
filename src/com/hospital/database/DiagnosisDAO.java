@@ -10,12 +10,19 @@ import java.util.List;
  */
 public class DiagnosisDAO {
 
-    /** Per-calling-thread last error from {@link #addDiagnosis(Diagnosis)} (avoids cross-thread leakage on shared DB access). */
+    /**
+     * Per-calling-thread last error from {@link #addDiagnosis(Diagnosis)} (avoids cross-thread leakage on shared DB access).
+     * <p>If you call {@code addDiagnosis} on a background thread, you must read this on the <strong>same</strong> thread
+     * (e.g. inside {@code doInBackground}). Do not call from the EDT after a background {@code addDiagnosis}.
+     * </p>
+     */
     private static final ThreadLocal<String> lastAddDiagnosisError = new ThreadLocal<>();
 
+    /**
+     * @see #addDiagnosis(Diagnosis) for thread semantics (only valid on the same thread that invoked {@code addDiagnosis})
+     */
     public static String getLastAddDiagnosisError() {
-        String s = lastAddDiagnosisError.get();
-        return s != null ? s : null;
+        return lastAddDiagnosisError.get();
     }
 
     private static void setLastAddDiagnosisError(String message) {

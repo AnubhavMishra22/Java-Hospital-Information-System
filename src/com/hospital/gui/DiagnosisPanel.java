@@ -374,9 +374,16 @@ public class DiagnosisPanel extends JPanel {
                 final Patient patientForRefresh = selectedPatient;
                 saveButton.setEnabled(false);
                 SwingWorker<Integer, Void> saveWorker = new SwingWorker<Integer, Void>() {
+                    /** Set on the worker thread when insert fails (ThreadLocal is not visible on EDT). */
+                    private String addErrorFromBackground;
+
                     @Override
                     protected Integer doInBackground() {
-                        return DiagnosisDAO.addDiagnosis(diagnosis);
+                        int id = DiagnosisDAO.addDiagnosis(diagnosis);
+                        if (id <= 0) {
+                            addErrorFromBackground = DiagnosisDAO.getLastAddDiagnosisError();
+                        }
+                        return id;
                     }
 
                     @Override
@@ -390,7 +397,7 @@ public class DiagnosisPanel extends JPanel {
                                 searchDiagnoses();
                                 dialog.dispose();
                             } else {
-                                String detail = DiagnosisDAO.getLastAddDiagnosisError();
+                                String detail = addErrorFromBackground;
                                 String msg = "Could not save this diagnosis.\n\n";
                                 if (detail != null && !detail.isEmpty()) {
                                     msg += "Reason:\n" + detail;
